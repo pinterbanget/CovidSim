@@ -18,8 +18,8 @@
 # ***
 # Sets the working directories for the coders.
 # setwd("/Users/rj/Documents/Codes/StatProg/covidsim") # Ryan's path
-# setwd("/Users/josephgill/Documents/covidsim") # Joseph's path
-setwd("/Users/fransiskusbudi/uoe/stat_prog/covidsim") # Frans' path
+setwd("/Users/josephgill/covidsim") # Joseph's path
+# setwd("/Users/fransiskusbudi/uoe/stat_prog/covidsim") # Frans' path
 
 # Data Loading
 data <- read.table("engcov.txt", header = TRUE)
@@ -44,6 +44,19 @@ death_day <- rep(days,deaths)
 infection_duration <- sample(1:80,n,prob=infection_to_death_normalized, replace = TRUE)
 t0 <- death_day - infection_duration 
 
+print(tabulate(death_day)) #how many people died on each day
+
+for (i in 1:n){
+    infection_duration <- sample(1:80,n,prob=infection_to_death_normalized, replace = TRUE)
+    t0 <- death_day - infection_duration 
+}
+
+print(t0)
+
+deconv<- function(t,deaths,n.rep=100,bs=FALSE,t0=NULL){
+
+}
+
 
 # below is function to calculate p
 pearson_eval <- function(actual_deaths, simulated_deaths) {
@@ -67,3 +80,5 @@ pearson_eval <- function(actual_deaths, simulated_deaths) {
   # Returns the sum of it all
   return(p)
 }
+
+print(pearson_eval(deaths,t0))
