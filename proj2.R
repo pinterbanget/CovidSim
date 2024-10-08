@@ -17,8 +17,8 @@
 ##################################
 # ***
 # Sets the working directories for the coders.
-# setwd("/Users/rj/Documents/Codes/StatProg/covidsim") # Ryan's path
-setwd("/Users/josephgill/covidsim") # Joseph's path
+setwd("/Users/rj/Documents/Codes/StatProg/covidsim") # Ryan's path
+# setwd("/Users/josephgill/covidsim") # Joseph's path
 # setwd("/Users/fransiskusbudi/uoe/stat_prog/covidsim") # Frans' path
 
 # Data Loading
@@ -27,13 +27,11 @@ data <- data[1:150,]
 days <- data$julian
 deaths <- data$nhs
 
-meanlog <- 3.152; sdlog <- 0.451
+meanlog <- 3.152
+sdlog <- 0.451
 
 infection_to_death <- dlnorm(1:80, meanlog, sdlog)
 infection_to_death_normalized <- infection_to_death / sum(infection_to_death)
-
-
-sum(infection_to_death)
 
 plot(infection_to_death,type="l", col='red')
 
@@ -44,19 +42,14 @@ death_day <- rep(days,deaths)
 infection_duration <- sample(1:80,n,prob=infection_to_death_normalized, replace = TRUE)
 t0 <- death_day - infection_duration 
 
-print(tabulate(death_day)) #how many people died on each day
+tabby <- tabulate(death_day, nbins = 310) #how many people died on each day
 
-for (i in 1:n){
-    infection_duration <- sample(1:80,n,prob=infection_to_death_normalized, replace = TRUE)
-    t0 <- death_day - infection_duration 
-}
+# for (i in 1:n){
+#     infection_duration <- sample(1:80,n,prob=infection_to_death_normalized, replace = TRUE)
+#     t0 <- death_day - infection_duration 
+# }
 
-print(t0)
-
-deconv<- function(t,deaths,n.rep=100,bs=FALSE,t0=NULL){
-
-}
-
+# print(t0)
 
 # below is function to calculate p
 pearson_eval <- function(actual_deaths, simulated_deaths) {
@@ -66,19 +59,73 @@ pearson_eval <- function(actual_deaths, simulated_deaths) {
   #   simulated_deaths (vector): simulated data
   # Returns:
   #   p (num): the final error calculated by the modified Pearson formula
-  
+
   # Sets p to store the sum of values by elements.
-  p <- 0
-  
-  # Loops through all data.
-  for (i in 1:length(actual_deaths)) {
-    di <- actual_deaths[i]
-    di_s <- simulated_deaths[i]
-    p <- p + ((di - di_s)**2 / max(c(1, di_s)))
-  }
-  
+  di <- actual_deaths
+  di_s <- simulated_deaths
+  p <- sum((di - di_s)**2 / max(c(1, di_s)))
+
   # Returns the sum of it all
   return(p)
 }
 
-print(pearson_eval(deaths,t0))
+deconv <- function(t, deaths, n.rep = 100, bs = FALSE, t0 = NULL) {
+  #
+  #
+  #
+  if (is.null(t0)) {
+    t0 <- death_day - infection_duration
+  }
+  
+  death_sum <- sum(deaths)
+  actual_death_day <- rep(days, deaths)
+  tabby_add <- tabulate(actual_death_day, nbins = 310)
+  
+  inft <- matrix(data=NA, nrow = 310, ncol = n.rep)
+  
+  n <- sample(1:80, death_sum, prob=infection_to_death_normalized, replace = TRUE)
+  t0 <- t0 + n
+  t0 <- max(t0, 1)
+  t0 <- min(t0, 310)
+  tabby_t0 <- tabulate(t0, nbins = 310)
+  pearson_score <- pearson_eval(tabby_add, tabby_t0)
+  
+  P <- rep(0, n.rep)
+  P[1] <- pearson_score
+  
+  to_pick_1 <- c(-8, -4, -2, -1, 1, 2, 4, 8)
+  to_pick_2 <- c(-4, -2, -1, 1, 2, 4)
+  to_pick_3 <- c(-2, -1, 1, 2)
+  
+  for(i in 2:n.rep) {
+    prev_t0 <- t0
+    
+    if (i < 50) {
+      to_sample <- to_pick_1
+    } else if (i < 75) {
+      to_sample <- to_pick_2
+    } else {
+      to_sample <- to_pick_3
+    }
+    
+    to_add_t0 <- sample(to_sample, death_sum, replace=TRUE)
+    t0 <- t0 + to_add_t0
+    t0 <- max(t0, 1)
+    t0 <- min(t0, 310)
+    
+    tabby_t0 <- tabulate(t0, nbins = 310)
+    new_pearson_score <- pearson_eval(tabby_add, tabby_t0)
+    if(new_pearson_score < P[i-1]) {
+      P[i] <- new_pearson_score
+      # inft[i] <- # implement this later
+    } else {
+      P[i] <- P[i-1]
+      t0 <- prev_t0
+    }
+    
+  }
+  return(P)
+}
+
+
+print(deconv(t = days, deaths = deaths))
