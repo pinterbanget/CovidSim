@@ -17,7 +17,7 @@
 ##################################
 # ***
 # Sets the working directories for the coders.
-setwd("/Users/rj/Documents/Codes/StatProg/covidsim") # Ryan's path
+# setwd("/Users/rj/Documents/Codes/StatProg/covidsim") # Ryan's path
 # setwd("/Users/josephgill/covidsim") # Joseph's path
 # setwd("/Users/fransiskusbudi/uoe/stat_prog/covidsim") # Frans' path
 
@@ -135,14 +135,11 @@ deconv <- function(t, deaths, n.rep = 100, bs = FALSE, t0 = NULL,
       to_sample <- to_pick_3
     }
 
-    random_indices <- sample(1:length(t0), n, replace = FALSE)
     random_additions <- sample(to_sample, n, replace = TRUE)
 
-    for (j in 1:length(t0)) {
-      current_index <- random_indices[j]
-
-      old_death_day <- sim_death_days[current_index]
-      new_death_day <- sim_death_days[current_index] + random_additions[current_index]
+    for (index in sample(1:n)) {
+      old_death_day <- sim_death_days[index]
+      new_death_day <- sim_death_days[index] + random_additions[index]
 
       new_death_day <- max(new_death_day, 1)
       new_death_day <- min(new_death_day, 310)
@@ -154,7 +151,7 @@ deconv <- function(t, deaths, n.rep = 100, bs = FALSE, t0 = NULL,
 
       if (current_ps < pearson_score) {
         pearson_score <- current_ps
-        sim_death_days[current_index] <- new_death_day
+        sim_death_days[index] <- new_death_day
       } else {
         total_sim_deaths_per_day[new_death_day] <- total_sim_deaths_per_day[new_death_day] - 1
         total_sim_deaths_per_day[old_death_day] <- total_sim_deaths_per_day[old_death_day] + 1
