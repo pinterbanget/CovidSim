@@ -154,8 +154,8 @@ deconv <- function(t, deaths, n.rep = 100, bs = FALSE, t0 = NULL,
 
       if (current_ps < pearson_score) {
         pearson_score <- current_ps
+        sim_death_days[current_index] <- new_death_day
       } else {
-        sim_death_days[current_index] <- old_death_day
         total_sim_deaths_per_day[new_death_day] <- total_sim_deaths_per_day[new_death_day] - 1
         total_sim_deaths_per_day[old_death_day] <- total_sim_deaths_per_day[old_death_day] + 1
       }
