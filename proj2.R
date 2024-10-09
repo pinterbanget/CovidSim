@@ -54,7 +54,7 @@ pearson_eval <- function(actual_deaths, simulated_deaths) {
   # Sets p to store the sum of values by elements.
   di <- actual_deaths
   di_s <- simulated_deaths
-  pearson_score <- sum((di - di_s)**2 / max(c(1, di_s)))
+  pearson_score <- sum((di - di_s)**2 / pmax(di_s, 1))
 
   # Returns the sum of it all
   return(pearson_score)
@@ -120,8 +120,8 @@ deconv <- function(t, deaths, n.rep = 100, bs = FALSE, t0 = NULL,
   # pearson_score <- pearson_eval(total_deaths_per_day, total_sim_deaths_per_day)
 
   for (i in 1:n.rep) {
-    sim_inf_days <- sample(1:80, n, prob=normalized_inf_to_d, replace = TRUE)
-    sim_death_days <- t0 + sim_inf_days
+    sim_inf_dur <- sample(1:80, n, prob=normalized_inf_to_d, replace = TRUE)
+    sim_death_days <- t0 + sim_inf_dur
     sim_death_days <- pmax(sim_death_days, 1) # done to filter out values < 1
     sim_death_days <- pmin(sim_death_days, 310) # done to filter out values > 310
     total_sim_deaths_per_day <- tabulate(sim_death_days, nbins = 310)
@@ -162,7 +162,7 @@ deconv <- function(t, deaths, n.rep = 100, bs = FALSE, t0 = NULL,
     }
 
     P[i] <- pearson_score
-    t0 <- sim_death_days - sim_inf_days
+    t0 <- sim_death_days - sim_inf_dur
     t0_freq <- tabulate(t0, nbins = 310)
     inft[, i] <- t0_freq
 
