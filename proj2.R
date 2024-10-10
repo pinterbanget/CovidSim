@@ -54,23 +54,18 @@ pearson_eval <- function(real_deaths, sim_deaths) {
   return(p)
 }
 
-deconv <- function(t, deaths, n.rep = 100, bs = FALSE, t0 = NULL,
-                   meanlog = 3.152, sdlog = 0.451) {
+deconv <- function(t, deaths, n.rep = 100, bs = FALSE, t0 = NULL) {
   # Computes the estimated COVID-19 infection date for patients, given
   # the death date for said patients.
   # ____
   # TODO: add more thorough comment
   #
   # Parameters:
-  #     t (vec)         :
+  #     t (vec)         : ____
   #     deaths (vec)    : days of death
   #     n.rep (int)     : the number of iterations to be done.
-  #     bs (bool)       : if bool
+  #     bs (bool)       : if bool ____
   #     t0 (vec)        : a vector of initial guesses for the day of infection
-  #     meanlog (float) : the mean of the log normal distribution.
-  #                       Defaults to 3.152 in line with the ISARIC study.
-  #     sdlog (float)   : the deviation standard of the log normal distribution.
-  #                       Defaults to 0.451 in line with the ISARIC study.
   #
   # Returns:
   #     P (vec)         : an n.rep-sized vector containing the history of the
@@ -102,8 +97,9 @@ deconv <- function(t, deaths, n.rep = 100, bs = FALSE, t0 = NULL,
 
   # Generates a probability of possible infection-to-death time for COVID-19
   # patients (the number of days between when a COVID-19 patient contracted 
-  # COVID-19 and their death).
-  infection_to_death <- dlnorm(1:80, meanlog, sdlog)
+  # COVID-19 and their death). Log normal distribution is used here,
+  # with mean = 3.152 and sd = 0.451, in line with the ISARIC study.
+  infection_to_death <- dlnorm(1:80, meanlog = 3.152, sdlog = 0.451)
   inf_to_d_normalised <- infection_to_death / sum(infection_to_death)
 
   # If not provided, generates t0, an n-spaced vector to estimate the
@@ -139,7 +135,8 @@ deconv <- function(t, deaths, n.rep = 100, bs = FALSE, t0 = NULL,
   for (i in 1:n.rep) {
     # The first part of this loop is to generate the variables that will
     # be used, together with evaluating the Pearson score
-    # 
+    # ___
+    # TODO: complete commenting above and add more commenting below
     sim_inf_dur <- sample(1:80, n, prob = inf_to_d_normalised, replace = TRUE)
     sim_death_days <- t0 + sim_inf_dur
     sim_death_days <- pmax(sim_death_days, 1) # done to filter out values < 1
