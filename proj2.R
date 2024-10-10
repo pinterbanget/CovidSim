@@ -19,29 +19,13 @@
 # Sets the working directories for the coders.
 # setwd("/Users/rj/Documents/Codes/StatProg/covidsim") # Ryan's path
 # setwd("/Users/josephgill/covidsim") # Joseph's path
-# setwd("/Users/fransiskusbudi/uoe/stat_prog/covidsim") # Frans' path
+setwd("/Users/fransiskusbudi/uoe/stat_prog/covidsim") # Frans' path
 
 # Data Loading
 data <- read.table("engcov.txt", header = TRUE)
 data <- data[1:150,]
-days <- data$julian
-deaths <- data$nhs
 
-meanlog <- 3.152
-sdlog <- 0.451
-
-infection_to_death <- dlnorm(1:80, meanlog, sdlog)
-infection_to_death_normalized <- infection_to_death / sum(infection_to_death)
-
-n <- sum(deaths) #29422
-death_day <- rep(days,deaths)
-
-
-infection_duration <- sample(1:80,n,prob=infection_to_death_normalized, replace = TRUE)
-t0 <- death_day - infection_duration 
-
-tabby <- tabulate(death_day, nbins = 310) #how many people died on each day
-
+##############
 
 pearson_eval <- function(actual_deaths, simulated_deaths) {
   # Evaluates the fitness of the model compared to the actual data.
@@ -86,6 +70,11 @@ deconv <- function(t, deaths, n.rep = 100, bs = FALSE, t0 = NULL,
 
   # Creates a 310-spaced vector to store the total deaths occurred on each day.
   total_deaths_per_day <- tabulate(death_days, nbins = 310)
+  
+  if (bs == TRUE){
+    poisson_death <- rpois(total_deaths_per_day,lambda=total_deaths_per_day)
+    
+  }
 
   # Generates a probability of possible infection-to-death time for COVID-19
   # patients (the number of days between when a COVID-19 patient contracted 
@@ -162,6 +151,8 @@ deconv <- function(t, deaths, n.rep = 100, bs = FALSE, t0 = NULL,
     t0 <- sim_death_days - sim_inf_dur
     t0_freq <- tabulate(t0, nbins = 310)
     inft[, i] <- t0_freq
+    
+    
 
     matplot(1:310, cbind(t0_freq, total_deaths_per_day, total_sim_deaths_per_day))
   }
@@ -169,5 +160,5 @@ deconv <- function(t, deaths, n.rep = 100, bs = FALSE, t0 = NULL,
   return(t0)
 }
 
-
-deconv(t = data$julian, deaths = data$nhs, n.rep = 100)
+t0 = deconv(t = data$julian, deaths = data$nhs, n.rep = 100)
+t0_pearson = deconv(t = data$julian, deaths = data$nhs, n.rep = 100, t0=t0, bs=TRUE)
