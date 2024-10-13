@@ -216,6 +216,9 @@ deconv <- function(t, deaths, n.rep = 100, bs = FALSE, t0 = NULL) {
     # TODO: complete above comment
 
     t0 <- sim_death_days - sim_inf_dur
+    t0 <- pmax(t0, 1)
+    t0 <- pmin(t0, 310)
+    
     t0_freq <- tabulate(t0, nbins = 310)
     inft[, i] <- t0_freq
 
