@@ -5,7 +5,7 @@
 
 ## Contributions:
 # Ryan (xx%) - pearson_eval function, deconv function (no bs), commenting
-# Joseph (xx%) -
+# Joseph (xx%) - 
 # Frans (xx%) - 
 
 ##################################
@@ -32,8 +32,8 @@
 ##################################
 ##################################
 # Sets the working directories for the coders.
-setwd("/Users/rj/Documents/Codes/StatProg/covidsim") # Ryan's path
-# setwd("/Users/josephgill/covidsim") # Joseph's path
+# setwd("/Users/rj/Documents/Codes/StatProg/covidsim") # Ryan's path
+setwd("/Users/josephgill/covidsim") # Joseph's path
 # setwd("/Users/fransiskusbudi/uoe/stat_prog/covidsim") # Frans' path
 
 
@@ -66,7 +66,7 @@ deconv <- function(t, deaths, n.rep = 100, bs = FALSE, t0 = NULL) {
   # given the death date for said patients.
   #
   # Parameters:
-  #     t (vec)         : ____
+  #     t (vec)         : This is a vector containing the day of infection from the data in Julian format.
   #     deaths (vec)    : days of death ____
   #     n.rep (int)     : the number of iterations to be done
   #                       (default: 100)
@@ -234,7 +234,13 @@ deconv <- function(t, deaths, n.rep = 100, bs = FALSE, t0 = NULL) {
     matplot(
       1:310,
       cbind(t0_freq, total_deaths_by_day, total_sim_deaths_by_day),
+      main = "A graph showing the deaths by day against",
+      xlab="Day in Julian format",
+      ylab="Number of deaths"
     )
+    
+    grid(nx = 20, ny = 20,
+     lty = 2, col = "gray", lwd = 2)
 
     # TODO: "prettify" plot above to include grids, titles, fixed axis scale,
     # axis labels, etc.
