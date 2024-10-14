@@ -231,16 +231,20 @@ deconv <- function(t, deaths, n.rep = 100, bs = FALSE, t0 = NULL) {
     # The first line is the estimated line of COVID-19 infection,
     # the second line is the actual data of COVID-19 deaths, and
     # the third line is the estimated data of COVID-19 deaths.
+    
     matplot(
       1:310,
       cbind(t0_freq, total_deaths_by_day, total_sim_deaths_by_day),
-      main = "A graph showing the deaths by day against",
-      xlab="Day in Julian format",
-      ylab="Number of deaths"
+      main = "A plot showing simulated deaths and real deaths at each day.",
+      xlab="Day in Julian format.",
+      ylab="Number of deaths.",
+      type = 'l'
     )
-    
-    grid(nx = 20, ny = 20,
+
+    grid(nx = 30, ny = 30,
      lty = 2, col = "gray", lwd = 2)
+    
+  
 
     # TODO: "prettify" plot above to include grids, titles, fixed axis scale,
     # axis labels, etc.
