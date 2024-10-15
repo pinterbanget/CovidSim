@@ -33,8 +33,8 @@
 ##################################
 # Sets the working directories for the coders.
 # setwd("/Users/rj/Documents/Codes/StatProg/covidsim") # Ryan's path
-setwd("/Users/josephgill/covidsim") # Joseph's path
-# setwd("/Users/fransiskusbudi/uoe/stat_prog/covidsim") # Frans' path
+# setwd("/Users/josephgill/covidsim") # Joseph's path
+setwd("/Users/fransiskusbudi/uoe/stat_prog/covidsim") # Frans' path
 
 
 pearson_eval <- function(real_deaths, sim_deaths) {
@@ -92,15 +92,12 @@ deconv <- function(t, deaths, n.rep = 100, bs = FALSE, t0 = NULL) {
   # Creates a 310-spaced vector to store the total deaths occurred on each day.
   # For this simulation, a limit is set where the deaths can only occur
   # between day 1 (inclusive) and day 310 (inclusive) of the year.
-  total_deaths_by_day <- tabulate(death_days, nbins = 310)
+  deaths_by_day <- tabulate(death_days, nbins = 310)
 
   # If bootstrapping is turned on, the total_deaths_by_day data is changed
   # to reflect Poisson distribution ____
   # TODO: complete this comment
-  if (bs) {
-    total_deaths_by_day <- rpois(total_deaths_by_day,
-                                 lambda = total_deaths_by_day)
-  }
+  
 
   # Generates a probability of possible infection-to-death time for COVID-19
   # patients (the number of days between when a COVID-19 patient contracted
@@ -143,7 +140,13 @@ deconv <- function(t, deaths, n.rep = 100, bs = FALSE, t0 = NULL) {
     # be used, together with evaluating the Pearson score
     # ___
     # TODO: complete commenting above and add more commenting below
-
+    if (bs) {
+      total_deaths_by_day <- rpois(length(deaths_by_day),
+                                   lambda = deaths_by_day)
+    } else{
+      total_deaths_by_day <- deaths_by_day
+    }
+    
     # Samples random infection-to-death times for each patient.
     sim_inf_dur <- sample(1:80, n, prob = inf_to_d_normalised, replace = TRUE)
 
@@ -234,15 +237,20 @@ deconv <- function(t, deaths, n.rep = 100, bs = FALSE, t0 = NULL) {
     
     matplot(
       1:310,
-      cbind(t0_freq, total_deaths_by_day, total_sim_deaths_by_day),
-      main = "A plot showing simulated deaths and real deaths at each day.",
-      xlab="Day in Julian format.",
-      ylab="Number of deaths.",
-      type = 'l'
+      cbind(t0_freq, total_sim_deaths_by_day, total_deaths_by_day),
+      main = paste("COVID-19 infections and deaths\n(iter #", i, ")", sep=""),
+      xlab = "Day number",
+      ylab = "Num. of people",
+      type = "l",
+      lty = "solid",
+      lwd = 1,
+      col = c("green", "orange", "blue"),
+      ylim = c(0, 1600)
     )
-
-    grid(nx = 30, ny = 30,
-     lty = 2, col = "gray", lwd = 2)
+    
+    legend(x = "topright", inset = 0.05,
+           legend = c("Est. new infections", "Est. deaths", "Actual deaths"),
+           col = c("green", "orange", "blue"),lty=1:2, cex=0.8)
     
   
 
@@ -250,7 +258,7 @@ deconv <- function(t, deaths, n.rep = 100, bs = FALSE, t0 = NULL) {
     # axis labels, etc.
   }
 
-  return(list(P, inft, t0))
+  return(list(P, inft, t0,total_sim_deaths_by_day,total_deaths_by_day))
 }
 
 # Loads the data.
@@ -266,10 +274,44 @@ t <- data$julian
 deaths <- data$nhs
 
 # Computes t0, a guess for initial COVID-19 infection time given the data.
-t0 <- deconv(t = t, deaths = deaths, n.rep = 100)[[3]]
+t0 <- deconv(t = t, deaths = deaths, n.rep = 100)
 
 # Computes t0 again but bootstrapped? ____
-t0_pearson <- deconv(t = t, deaths = data$nhs, n.rep = 100, t0 = t0, bs = TRUE)[[3]]
+t0_bs <- deconv(t = t, deaths = data$nhs, n.rep = 100, t0 = t0[[3]], bs = TRUE)
+
+inft_t0 <- t0[[2]]
+
+inft_bs <- t0_bs[[2]]
+
+min_inft_bs<- rep(0,310)
+max_inft_bs<- rep(0,310)
+
+for (i in 1:310){
+  min_inft_bs[i] <- min(inft_bs[i,]) 
+  max_inft_bs[i] <- max(inft_bs[i,]) 
+}
+
+sim_deaths <- t0[[4]]
+
+death_day <- t0[[5]]
+
+matplot(
+  1:310,
+  cbind(inft_t0[,100], min_inft_bs, max_inft_bs, sim_deaths, death_day),
+  main = paste("COVID-19 infections and deaths", sep=""),
+  xlab = "Day number",
+  ylab = "Num. of people",
+  type = "l",
+  lty = c("solid","dashed","dashed","solid","solid"),
+  lwd = 1,
+  col = c("green","red","red", "orange", "blue"),
+  ylim = c(0, 1600)
+)
+abline(v=84, col ='red', lwd=2)
+
+legend(x = "topright", inset = 0.05,
+       legend = c("Est. new infections", "bs1","bs2" ,"Est. deaths", "Actual deaths"),
+       col = c("green","red","red", "orange", "blue"),lty=c("solid","dashed","dashed","solid","solid"), cex=0.8)
 
 # TODO: create final graphs
 # TODO: check bootstrap implementation, is it correct already?
