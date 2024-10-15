@@ -4,7 +4,7 @@
 # Fransiskus Budi Kurnia Agung (s2670828@ed.ac.uk)
 
 ## Contributions:
-# Ryan (xx%) - pearson_eval function, deconv function (no bs), commenting
+# Ryan (xx%) - pearson_eval function, deconv function, commenting
 # Joseph (xx%) - 
 # Frans (xx%) - 
 
@@ -15,7 +15,24 @@
 # This R code contains functions to implement a simple
 # simulation method to infer fatal COVID-19 incidence rates
 # using data from COVID-19 deaths in English hospitals.
-# The simulation works by first ____
+# The idea is since there are sufficient information on distribution
+# of time from infection to death from COVID-19, we can estimate the
+# days that patients first contacted COVID-19. The result from this
+# simulation can be used to determine the effectiveness of control methods.
+
+# The simulation works by first getting NHS data of the number of patients
+# that died each day, and on what day they died. Then, using infection-to-death
+# time distribution, we can estimate the days that patients most likely got
+# COVID-19 by subtracting the death days by a random time from the distribution.
+# This infection day estimation is then added by a resampled time from the
+# infection-to-death distribution (making them effectively death days)
+# and comparing them with the actual data of death days.
+# This process is done multiple times to get the estimation of infection days
+# that fits the most with the distribution data.
+
+# When the data converges, the simulation is run again, this time to get
+# the sense of uncertainty from the estimation, by ____
+# TODO: add Poisson stuff above this
 
 # 1) "pearson_eval" function: Evaluates the fitness of the simulated model,
 # e.g. how similar the simulated data is compared to the real data.
@@ -23,11 +40,14 @@
 # each element, di and di_s, is squared, and then divided by di_s
 # (or 1 if di_s is lower than 1), where  di indicates a point from the
 # actual data, and di_s indicates a point from the simulated data. The sum
-# of all the points is the Pearson value (P).
-# Note that the lower the P, the better the fitness of the model.
+# of all the points is the Pearson value.
+# Note that the lower the Pearson value, the better the fitness of the model.
 
 # 2) "deconv" function: Approximates data according to the simulation.
-# ____
+# Real data is given to this function, along with estimation of infection days
+# (if any; if not, the function generates it for you) and how many iterations
+# this function should run. For each iteration, _____
+# TODO: complete this comment
 
 ##################################
 ##################################
@@ -66,7 +86,7 @@ deconv <- function(t, deaths, n.rep = 100, bs = FALSE, t0 = NULL) {
   # given the death date for said patients.
   #
   # Parameters:
-  #     t (vec)         : This is a vector containing the day of infection from the data in Julian format.
+  #     t (vec)         : a vector of days of infection in Julian format
   #     deaths (vec)    : days of death ____
   #     n.rep (int)     : the number of iterations to be done
   #                       (default: 100)
@@ -93,11 +113,6 @@ deconv <- function(t, deaths, n.rep = 100, bs = FALSE, t0 = NULL) {
   # For this simulation, a limit is set where the deaths can only occur
   # between day 1 (inclusive) and day 310 (inclusive) of the year.
   deaths_by_day <- tabulate(death_days, nbins = 310)
-
-  # If bootstrapping is turned on, the total_deaths_by_day data is changed
-  # to reflect Poisson distribution ____
-  # TODO: complete this comment
-  
 
   # Generates a probability of possible infection-to-death time for COVID-19
   # patients (the number of days between when a COVID-19 patient contracted
@@ -137,16 +152,19 @@ deconv <- function(t, deaths, n.rep = 100, bs = FALSE, t0 = NULL) {
   # Loops over n.rep times.
   for (i in 1:n.rep) {
     # The first part of this loop is to generate the variables that will
-    # be used, together with evaluating the Pearson score
-    # ___
-    # TODO: complete commenting above and add more commenting below
+    # be used, together with evaluating the initial Pearson score.
+
+    # If bootstrapping is enabled, the number of deaths per day is sampled
+    # from a Poisson distribution ____.
+    # TODO: add this comment
+    # If not, the number of deaths per day used for the model is the real data.
     if (bs) {
       total_deaths_by_day <- rpois(length(deaths_by_day),
                                    lambda = deaths_by_day)
-    } else{
+    } else {
       total_deaths_by_day <- deaths_by_day
     }
-    
+
     # Samples random infection-to-death times for each patient.
     sim_inf_dur <- sample(1:80, n, prob = inf_to_d_normalised, replace = TRUE)
 
@@ -157,7 +175,7 @@ deconv <- function(t, deaths, n.rep = 100, bs = FALSE, t0 = NULL) {
     sim_death_days <- pmax(sim_death_days, 1)
     sim_death_days <- pmin(sim_death_days, 310)
 
-    # Tabulates the result to ____.
+    # Tabulates the result to get total simulated deaths by day.
     total_sim_deaths_by_day <- tabulate(sim_death_days, nbins = 310)
 
     # Computes the initial Pearson value for this iteration.
@@ -184,8 +202,7 @@ deconv <- function(t, deaths, n.rep = 100, bs = FALSE, t0 = NULL) {
 
     # Starts the loop to shift and evaluate sim_death_days.
     # Each element in sim_death_days is accessed and updated in a random order
-    # to avoid ______
-    # TODO: complete desc above
+    # to avoid bias and trends.
     for (index in sample(1:n)) {
       # Saves the old day of death value.
       old_death_day <- sim_death_days[index]
@@ -214,58 +231,51 @@ deconv <- function(t, deaths, n.rep = 100, bs = FALSE, t0 = NULL) {
       }
     }
 
-    # The third part of this loop is to update all variables
-    # ___
-    # TODO: complete above comment
-
+    # The third part of this loop is to update all variables after a full
+    # update of sim_death_days, meaning we can get a full update of t0.
     t0 <- sim_death_days - sim_inf_dur
+
+    # t0 is then filtered to stay within the (1, 310) range.
     t0 <- pmax(t0, 1)
     t0 <- pmin(t0, 310)
-    
+
+    # t0 is then tabulated, to get the number of new infections by day.
     t0_freq <- tabulate(t0, nbins = 310)
+
+    # This iteration's number of new infections by day is stored in inft.
     inft[, i] <- t0_freq
 
     # Puts the final Pearson score for the i-th iteration to P.
     P[i] <- pearson_value
 
-    # Generates 3 line charts for this iteration, with the x axis
+    # Generates three line charts for this iteration, with the x axis
     # being the possible days of data (in this case 1:310),
     # and the y axis being the number of people.
-    # The first line is the estimated line of COVID-19 infection,
-    # the second line is the actual data of COVID-19 deaths, and
-    # the third line is the estimated data of COVID-19 deaths.
-    
-    # matplot(
-    #   1:310,
-    #   cbind(t0_freq, total_sim_deaths_by_day, total_deaths_by_day),
-    #   main = paste("COVID-19 infections and deaths\n(iter #", i, ")", sep=""),
-    #   xlab = "Day number",
-    #   ylab = "Num. of people",
-    #   type = "l",
-    #   lty = "solid",
-    #   lwd = 1,
-    #   col = c("green", "orange", "blue"),
-    #   ylim = c(0, 1600)
-    # )
-    
-    plot(1:310,t0_freq, col='black', type ="l", lwd=2,xlab = "Day number",
-         ylab = "Num. of people",ylim = c(0, 1800),main = paste("COVID-19 infections and deaths\n(iter #", i, ")", sep=""))
-    
-    lines(1:310,total_deaths_by_day, col ='blue', type ='l', lwd =1,lty ='solid')
-    lines(1:310,total_sim_deaths_by_day, col ='red', type ='l', lwd =1,lty ='dotdash')
-    abline(v=84, col ='red', lwd=2)
-    
+
+    # The first line is the estimated data of COVID-19 infection.
+    plot(1:310, t0_freq, col = "black", type = "l", lwd = 2,
+         xlab = "Day number", ylab = "Num. of people", ylim = c(0, 1800),
+         main = paste("COVID-19 infections and deaths\n(iter #", i, ")",
+                      sep = ""))
+
+    # The second line is the actual data of COVID-19 deaths.
+    lines(1:310, total_deaths_by_day, col = "blue",
+          type = "l", lwd = 1, lty = "solid")
+
+    # The third line is the estimated data of COVID-19 deaths.
+    lines(1:310, total_sim_deaths_by_day, col = "red",
+          type = "l", lwd = 1,lty = "dotdash")
+
+    # A line is shown to indicate the first day of lockdown (day 84).
+    abline(v = 84, col = "red", lwd = 2)
+
+    # A legend is put on the top right of the graph.
     legend(x = "topright", inset = 0.05,
            legend = c("Est. new infections", "Est. deaths", "Actual deaths"),
-           col = c("green", "orange", "blue"),lty=1:2, cex=0.8)
-    
-  
-
-    # TODO: "prettify" plot above to include grids, titles, fixed axis scale,
-    # axis labels, etc.
+           col = c("green", "#302a20", "blue"), lty = 1:2, cex = 0.8)
   }
 
-  return(list(P, inft, t0,total_sim_deaths_by_day,total_deaths_by_day))
+  return(list(P, inft, t0, total_sim_deaths_by_day, total_deaths_by_day))
 }
 
 # Loads the data.
