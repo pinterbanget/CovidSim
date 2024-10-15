@@ -235,18 +235,25 @@ deconv <- function(t, deaths, n.rep = 100, bs = FALSE, t0 = NULL) {
     # the second line is the actual data of COVID-19 deaths, and
     # the third line is the estimated data of COVID-19 deaths.
     
-    matplot(
-      1:310,
-      cbind(t0_freq, total_sim_deaths_by_day, total_deaths_by_day),
-      main = paste("COVID-19 infections and deaths\n(iter #", i, ")", sep=""),
-      xlab = "Day number",
-      ylab = "Num. of people",
-      type = "l",
-      lty = "solid",
-      lwd = 1,
-      col = c("green", "orange", "blue"),
-      ylim = c(0, 1600)
-    )
+    # matplot(
+    #   1:310,
+    #   cbind(t0_freq, total_sim_deaths_by_day, total_deaths_by_day),
+    #   main = paste("COVID-19 infections and deaths\n(iter #", i, ")", sep=""),
+    #   xlab = "Day number",
+    #   ylab = "Num. of people",
+    #   type = "l",
+    #   lty = "solid",
+    #   lwd = 1,
+    #   col = c("green", "orange", "blue"),
+    #   ylim = c(0, 1600)
+    # )
+    
+    plot(1:310,t0_freq, col='black', type ="l", lwd=2,xlab = "Day number",
+         ylab = "Num. of people",ylim = c(0, 1800),main = paste("COVID-19 infections and deaths\n(iter #", i, ")", sep=""))
+    
+    lines(1:310,total_deaths_by_day, col ='blue', type ='l', lwd =1,lty ='solid')
+    lines(1:310,total_sim_deaths_by_day, col ='red', type ='l', lwd =1,lty ='dotdash')
+    abline(v=84, col ='red', lwd=2)
     
     legend(x = "topright", inset = 0.05,
            legend = c("Est. new infections", "Est. deaths", "Actual deaths"),
@@ -295,23 +302,36 @@ sim_deaths <- t0[[4]]
 
 death_day <- t0[[5]]
 
-matplot(
-  1:310,
-  cbind(inft_t0[,100], min_inft_bs, max_inft_bs, sim_deaths, death_day),
-  main = paste("COVID-19 infections and deaths", sep=""),
-  xlab = "Day number",
-  ylab = "Num. of people",
-  type = "l",
-  lty = c("solid","dashed","dashed","solid","solid"),
-  lwd = 1,
-  col = c("green","red","red", "orange", "blue"),
-  ylim = c(0, 1600)
-)
+# matplot(
+#   1:310,
+#   cbind(inft_t0[,100], min_inft_bs, max_inft_bs, sim_deaths, death_day),
+#   main = paste("COVID-19 infections and deaths", sep=""),
+#   xlab = "Day number",
+#   ylab = "Num. of people",
+#   type = c("l","l","l","l","l"),
+#   lty = c("solid","dashed","dashed","solid","dashed"),
+#   lwd = c(2,1,1,1,1),
+#   col = c("green","gray","gray", "red", "blue"),
+#   ylim = c(0, 1600)
+# )
+plot(1:310,inft_t0[,100], col='black', type ="l", lwd=2,xlab = "Day number",
+     ylab = "Num. of people",ylim = c(0, 1800))
+lines(1:310,min_inft_bs, col ='gray', type ='l', lwd =1,lty ='dashed')
+lines(1:310,max_inft_bs, col ='gray', type ='l', lwd =1,lty ='dashed')
+
+lines(1:310,death_day, col ='blue', type ='l', lwd =1,lty ='solid')
+lines(1:310,sim_deaths, col ='red', type ='l', lwd =1,lty ='dotdash')
 abline(v=84, col ='red', lwd=2)
 
 legend(x = "topright", inset = 0.05,
        legend = c("Est. new infections", "bs1","bs2" ,"Est. deaths", "Actual deaths"),
-       col = c("green","red","red", "orange", "blue"),lty=c("solid","dashed","dashed","solid","solid"), cex=0.8)
+       col = c("green","gray","gray", "red", "blue"),lty=c("solid","dashed","dashed","dotdash","solid"), cex=0.8)
+
+x <- 1:length(min_inft_bs)
+polygon(c(x, rev(x)), c(min_inft_bs, rev(max_inft_bs)), col = 'gray', density = 50, border = NA)
+
+
+# polygon(c(min_inft_bs),c(min_inft_bs),col='gray')
 
 # TODO: create final graphs
 # TODO: check bootstrap implementation, is it correct already?
