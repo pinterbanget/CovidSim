@@ -26,7 +26,8 @@
 # COVID-19 by subtracting the death days by a random time from the distribution.
 # This infection day estimation is then added by a resampled time from the
 # infection-to-death distribution (making them effectively death days)
-# and comparing them with the actual data of death days.
+# and comparing them with the actual data of death days to judge the
+# goodness of the estimation (done using a modified Pearson formula).
 # This process is done multiple times to get the estimation of infection days
 # that fits the most with the distribution data.
 
@@ -36,22 +37,6 @@
 
 # The first part of the code is to generate all the data needed,
 # while the second part is to take care of the plots from the simulation.
-
-# 1) "pearson_eval" function: Evaluates the fitness of the simulated model,
-# e.g. how similar the simulated data is compared to the real data.
-# A modified Pearson value formula is used, where the difference between
-# each element, di and di_s, is squared, and then divided by di_s
-# (or 1 if di_s is lower than 1), where  di indicates a point from the
-# actual data, and di_s indicates a point from the simulated data. The sum
-# of all the points is the Pearson value.
-# Note that the lower the Pearson value, the better the fitness of the model.
-
-# 2) "deconv" function: Approximates data according to the simulation.
-# Real data is given to this function, along with estimation of infection days
-# (if any; if not, the function generates it for you) and how many iterations
-# this function should run. For each iteration, the estimated infection days
-# ___
-# TODO: complete this comment
 
 ##################################
 ##################################
@@ -63,7 +48,11 @@ setwd("/Users/rj/Documents/Codes/StatProg/covidsim") # Ryan's path
 
 pearson_eval <- function(real_deaths, sim_deaths) {
   # Evaluates the fitness of the model compared to the actual data
-  # using a modified Pearson value formula.
+  # using a modified Pearson value formula: the difference between
+  # each element, di and di_s, is squared, and then divided by di_s
+  # (or 1 if di_s is lower than 1), where di indicates a point from the
+  # actual data, and di_s indicates a point from the simulated data.
+  # The sum of all the points is the Pearson value.
   #
   # Parameters:
   #   real_deaths (vec) : actual data of deaths by day
@@ -87,7 +76,9 @@ pearson_eval <- function(real_deaths, sim_deaths) {
 
 deconv <- function(t, deaths, n.rep = 100, bs = FALSE, t0 = NULL) {
   # Computes the estimated COVID-19 infection date for patients,
-  # given the death date for said patients.
+  # given the death date for said patients. The estimation is done
+  # iteratively, where ____
+  # TODO: complete this comment
   #
   # Parameters:
   #     t (vec)         : a vector of the days of the year
@@ -97,7 +88,7 @@ deconv <- function(t, deaths, n.rep = 100, bs = FALSE, t0 = NULL) {
   #                       (default: 100)
   #     bs (bool)       : a flag indicating bootstrapping application
   #                       (default: FALSE)
-  #     t0 (vec)        : a vector of guesses for the days of infections
+  #     t0 (vec)        : a vector of estimations for the days of infections
   #                       (default: NULL)
   #
   # Returns:
