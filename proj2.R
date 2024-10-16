@@ -93,7 +93,7 @@ deconv <- function(t, deaths, n.rep = 100, bs = FALSE, t0 = NULL) {
   #                       Pearson values for each iteration
   #     inft (mat)      : a matrix of shape (310, n.rep) containing deaths
   #                       by t0 for each iteration
-  #     t0 (vec)        : a vector of infection day estimations for each patient
+  #     t0 (vec)        : a vector of estimations for the days of infections
   #     total_sdbd (vec): a vector of simulated days of deaths from the model
 
   # Calculates the total number of deaths occurred from the data.
