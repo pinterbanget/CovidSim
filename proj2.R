@@ -334,7 +334,7 @@ lines(1:310,sim_deaths, col ='red', type ='l', lwd =1,lty ='dotdash', ylim = c(0
 abline(v=84, col ='red', lwd=2,ylim = c(0, 1800))
 
 legend(x = "topright", inset = 0.05,
-       legend = c("Est. new infections", "bs1","bs2" ,"Est. deaths", "Actual deaths","Start of Pandemic"),
+       legend = c("Est. new infections", "bs1","bs2" ,"Est. deaths", "Actual deaths","Start of Lockdown"),
        col = c("green","gray","gray", "red", "blue","red"),lty=c("solid","dashed","dashed","dotdash","solid","solid"), cex=0.8)
 
 x <- 1:length(min_inft_bs)
