@@ -4,7 +4,7 @@
 # Fransiskus Budi Kurnia Agung (s2670828@ed.ac.uk)
 
 ## Contributions:
-# Ryan (xx%) - pearson_eval function, deconv function, commenting
+# Ryan (xx%) - pearson_eval function, initial deconv function, commenting
 # Joseph (xx%) - 
 # Frans (xx%) - 
 
@@ -34,6 +34,9 @@
 # the sense of uncertainty from the estimation, by ____
 # TODO: add Poisson stuff above this
 
+# The first part of the code is to generate all the data needed,
+# while the second part is to take care of the plots from the simulation.
+
 # 1) "pearson_eval" function: Evaluates the fitness of the simulated model,
 # e.g. how similar the simulated data is compared to the real data.
 # A modified Pearson value formula is used, where the difference between
@@ -46,15 +49,16 @@
 # 2) "deconv" function: Approximates data according to the simulation.
 # Real data is given to this function, along with estimation of infection days
 # (if any; if not, the function generates it for you) and how many iterations
-# this function should run. For each iteration, _____
+# this function should run. For each iteration, the estimated infection days
+# ___
 # TODO: complete this comment
 
 ##################################
 ##################################
 # Sets the working directories for the coders.
-# setwd("/Users/rj/Documents/Codes/StatProg/covidsim") # Ryan's path
+setwd("/Users/rj/Documents/Codes/StatProg/covidsim") # Ryan's path
 # setwd("/Users/josephgill/covidsim") # Joseph's path
-setwd("/Users/fransiskusbudi/uoe/stat_prog/covidsim") # Frans' path
+# setwd("/Users/fransiskusbudi/uoe/stat_prog/covidsim") # Frans' path
 
 
 pearson_eval <- function(real_deaths, sim_deaths) {
@@ -81,18 +85,19 @@ pearson_eval <- function(real_deaths, sim_deaths) {
   return(p)
 }
 
-deconv <- function(t, deaths, n.rep = 100, bs = FALSE, t0 = NULL) {
+deconv <- function(t, deaths, n.rep = 10, bs = FALSE, t0 = NULL) {
   # Computes the estimated COVID-19 infection date for patients,
   # given the death date for said patients.
   #
   # Parameters:
-  #     t (vec)         : a vector of days of infection in Julian format
-  #     deaths (vec)    : days of death ____
+  #     t (vec)         : a vector of the days of the year
+  #     deaths (vec)    : a vector of number of deaths happening on
+  #                       the days supplied by t
   #     n.rep (int)     : the number of iterations to be done
   #                       (default: 100)
-  #     bs (bool)       : if bool ____
+  #     bs (bool)       : a flag indicating bootstrapping application
   #                       (default: FALSE)
-  #     t0 (vec)        : a vector of initial guesses for the day of infection
+  #     t0 (vec)        : a vector of guesses for the days of infections
   #                       (default: NULL)
   #
   # Returns:
@@ -100,7 +105,8 @@ deconv <- function(t, deaths, n.rep = 100, bs = FALSE, t0 = NULL) {
   #                       Pearson values for each iteration
   #     inft (mat)      : a matrix of shape (310, n.rep) containing deaths
   #                       by t0 for each iteration
-  #     t0 (vec)        : a vector of infection day estimation for each patient
+  #     t0 (vec)        : a vector of infection day estimations for each patient
+  #     total_sdbd (vec): a vector of simulated days of deaths from the model
 
   # Calculates the total number of deaths occurred from the data.
   n <- sum(deaths)
@@ -118,16 +124,18 @@ deconv <- function(t, deaths, n.rep = 100, bs = FALSE, t0 = NULL) {
   # patients (the number of days between when a COVID-19 patient contracted
   # COVID-19 and their death). Log normal distribution is used here,
   # with mean = 3.152 and sd = 0.451, in line with the ISARIC study.
-  infection_to_death <- dlnorm(1:80, meanlog = 3.152, sdlog = 0.451)
-  inf_to_d_normalised <- infection_to_death / sum(infection_to_death)
+  inf_to_d_dist <- dlnorm(1:80, meanlog = 3.152, sdlog = 0.451)
+
+  # This distribution is then normalised.
+  inf_to_d_dist <- inf_to_d_dist / sum(inf_to_d_dist)
 
   # If not provided, generates t0, an n-spaced vector to estimate the
   # day of COVID-19 infection for each patient.
   # Elements in t0 are gained from subtracting the days of patient deaths
-  # by a randomised number from 1 to 80, picked using inf_to_d_normalised
-  # as the weights for each number.
+  # by a randomised number from 1 to 80, picked using inf_to_d_dist, as the
+  # weights for each number.
   if (is.null(t0)) {
-    t0 <- death_days - sample(1:80, n, prob = inf_to_d_normalised,
+    t0 <- death_days - sample(1:80, n, prob = inf_to_d_dist,
                               replace = TRUE)
   }
 
@@ -151,8 +159,8 @@ deconv <- function(t, deaths, n.rep = 100, bs = FALSE, t0 = NULL) {
 
   # Loops over n.rep times.
   for (i in 1:n.rep) {
-    # The first part of this loop is to generate the variables that will
-    # be used, together with evaluating the initial Pearson score.
+    # The first part of this loop is to generate the variables that will be
+    # used to update t0, together with evaluating the initial Pearson score.
 
     # If bootstrapping is enabled, the number of deaths per day is sampled
     # from a Poisson distribution ____.
@@ -166,7 +174,7 @@ deconv <- function(t, deaths, n.rep = 100, bs = FALSE, t0 = NULL) {
     }
 
     # Samples random infection-to-death times for each patient.
-    sim_inf_dur <- sample(1:80, n, prob = inf_to_d_normalised, replace = TRUE)
+    sim_inf_dur <- sample(1:80, n, prob = inf_to_d_dist, replace = TRUE)
 
     # Adds the times to t0 to obtain simulated days of death.
     sim_death_days <- t0 + sim_inf_dur
@@ -175,7 +183,7 @@ deconv <- function(t, deaths, n.rep = 100, bs = FALSE, t0 = NULL) {
     sim_death_days <- pmax(sim_death_days, 1)
     sim_death_days <- pmin(sim_death_days, 310)
 
-    # Tabulates the result to get total simulated deaths by day.
+    # Tabulates the result to get the total simulated deaths by day.
     total_sim_deaths_by_day <- tabulate(sim_death_days, nbins = 310)
 
     # Computes the initial Pearson value for this iteration.
@@ -220,12 +228,12 @@ deconv <- function(t, deaths, n.rep = 100, bs = FALSE, t0 = NULL) {
       new_total_sdbd[old_death_day] <- new_total_sdbd[old_death_day] - 1
 
       # Evaluates the Pearson value with the new death day values.
-      current_pv <- pearson_eval(total_deaths_by_day, new_total_sdbd)
+      new_pv <- pearson_eval(total_deaths_by_day, new_total_sdbd)
 
       # If the Pearson value decreases,
       # update the new variables made within this loop.
-      if (current_pv < pearson_value) {
-        pearson_value <- current_pv
+      if (new_pv < pearson_value) {
+        pearson_value <- new_pv
         sim_death_days[index] <- new_death_day
         total_sim_deaths_by_day <- new_total_sdbd
       }
@@ -275,9 +283,16 @@ deconv <- function(t, deaths, n.rep = 100, bs = FALSE, t0 = NULL) {
            col = c("green", "#302a20", "blue"), lty = 1:2, cex = 0.8)
   }
 
-  return(list(P, inft, t0, total_sim_deaths_by_day, total_deaths_by_day))
+  # Saves the simulation of death days from the final iteration.
+  # This is necessary to know the fit of the simulation model
+  # vs. the real data.
+  total_sdbd <- total_sim_deaths_by_day
+
+  return(list(P, inft, t0, total_sdbd))
 }
 
+
+## Part 1: Data Generation
 # Loads the data.
 data <- read.table("engcov.txt", header = TRUE)
 
@@ -287,30 +302,35 @@ data <- data[1:150, ]
 # Gets t, the days of the year, from the data.
 t <- data$julian
 
-# Gets deaths, the number of deaths happening per day.
+# Gets deaths, the number of deaths happening by day, from the data.
 deaths <- data$nhs
 
-# Computes t0, a guess for initial COVID-19 infection time given the data.
-t0 <- deconv(t = t, deaths = deaths, n.rep = 100)
+# Calls the deconv function to run the initial simulation for estimated
+# infection days, just by feeding t and deaths to the function.
+initial_sim <- deconv(t, deaths)
 
-# Computes t0 again but bootstrapped? ____
-t0_bs <- deconv(t = t, deaths = data$nhs, n.rep = 100, t0 = t0[[3]], bs = TRUE)
+# To get an idea of uncertainty within the estimated infection days,
+# calls the deconv function again, this time with bootstrapping, 
+# and with the previously-converged t0 being passed.
+bootstrapped_sim <- deconv(t, deaths, bs = TRUE, t0 = initial_sim[[3]])
 
-inft_t0 <- t0[[2]]
 
-inft_bs <- t0_bs[[2]]
+## Part 2: Plot Generation
+# Accesses the t0 iteration history for both the initial
+# and the bootstrapped simulations.
+inft_t0 <- initial_sim[[2]]
+inft_bs <- bootstrapped_sim[[2]]
 
-min_inft_bs<- rep(0,310)
-max_inft_bs<- rep(0,310)
+# Gets the minimum and maximum values for t0 across different
+# iterations per day (with the bootstrapped data).
+min_inft_bs <- apply(inft_bs, 1, min)
+max_inft_bs <- apply(inft_bs, 1, max)
 
-for (i in 1:310){
-  min_inft_bs[i] <- min(inft_bs[i,]) 
-  max_inft_bs[i] <- max(inft_bs[i,]) 
-}
+# Accesses the simulated days of death to capture the model's fitness.
+sim_deaths_tabulated <- initial_sim[[4]]
 
-sim_deaths <- t0[[4]]
-
-death_day <- t0[[5]]
+# Tabulated the actual days of death data to compare with the simulated result.
+actual_deaths_tabulated <- tabulate(deaths, nbins=310)
 
 # matplot(
 #   1:310,
