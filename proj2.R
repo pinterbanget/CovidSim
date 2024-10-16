@@ -35,9 +35,6 @@
 # the sense of uncertainty from the estimation, by ____
 # TODO: add Poisson stuff above this
 
-# The first part of the code is to generate all the data needed,
-# while the second part is to take care of the plots from the simulation.
-
 ##################################
 ##################################
 # Sets the working directories for the coders.
@@ -52,7 +49,7 @@ pearson_eval <- function(real_deaths, sim_deaths) {
   # each element, di and di_s, is squared, and then divided by di_s
   # (or 1 if di_s is lower than 1), where di indicates a point from the
   # actual data, and di_s indicates a point from the simulated data.
-  # The sum of all the points is the Pearson value.
+  # The sum of all the points differences is the Pearson value.
   #
   # Parameters:
   #   real_deaths (vec) : actual data of deaths by day
@@ -283,7 +280,6 @@ deconv <- function(t, deaths, n.rep = 100, bs = FALSE, t0 = NULL) {
 }
 
 
-## Part 1: Data Generation
 # Loads the data.
 data <- read.table("engcov.txt", header = TRUE)
 
@@ -301,12 +297,10 @@ deaths <- data$nhs
 initial_sim <- deconv(t, deaths)
 
 # To get an idea of uncertainty within the estimated infection days,
-# calls the deconv function again, this time with bootstrapping, 
+# calls the deconv function again, this time with bootstrapping,
 # and with the previously-converged t0 being passed.
 bootstrapped_sim <- deconv(t, deaths, bs = TRUE, t0 = initial_sim[[3]])
 
-
-## Part 2: Plot Generation
 # Accesses the t0 iteration history for both the initial
 # and the bootstrapped simulations.
 inft_t0 <- initial_sim[[2]]
