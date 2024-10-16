@@ -52,23 +52,23 @@ pearson_eval <- function(real_deaths, sim_deaths) {
   # The sum of all the points differences is the Pearson value.
   #
   # Parameters:
-  #   real_deaths (vec) : actual data of deaths by day
-  #   sim_deaths (vec)  : simulated data of deaths by day
+  #   real_deaths (vec)   : actual data of deaths by day
+  #   sim_deaths (vec)    : simulated data of deaths by day
   #
   # Returns:
-  #   p (float)         : the Pearson value calculated by the modified
-  #                       Pearson formula
+  #   pearson_val (float) : the Pearson value calculated by the modified
+  #                         Pearson formula
 
   # di and di_s are declared as vectors,
   # so vectorisation computation can be done.
   di <- real_deaths
   di_s <- sim_deaths
-  p_vec <- (di - di_s)**2 / pmax(di_s, 1)
+  pearson_val_vec <- (di - di_s)**2 / pmax(di_s, 1)
 
   # The sum of each element in the vectors is the Pearson value.
-  p <- sum(p_vec)
+  pearson_val <- sum(pearson_val_vec)
 
-  return(p)
+  return(pearson_val)
 }
 
 deconv <- function(t, deaths, n.rep = 100, bs = FALSE, t0 = NULL) {
@@ -167,21 +167,15 @@ deconv <- function(t, deaths, n.rep = 100, bs = FALSE, t0 = NULL) {
     # Adds the times to t0 to obtain simulated days of death.
     sim_death_days <- t0 + sim_inf_dur
 
-    # Filters the results to stay in the (1:310) range.
-    sim_death_days <- pmax(sim_death_days, 1)
-    sim_death_days <- pmin(sim_death_days, 310)
-
     # Tabulates the result to get the total simulated deaths by day.
     total_sim_deaths_by_day <- tabulate(sim_death_days, nbins = 310)
 
     # Computes the initial Pearson value for this iteration.
     pearson_value <- pearson_eval(total_deaths_by_day, total_sim_deaths_by_day)
 
-    # The second part of this loop is to shift sim_death_days by a random step
-    # to try to improve the Pearson value. The shifting and evaluation is done
-    # per-element, so another loop of n times will be done in this loop.
-    # Later on in the code, sim_death_days will be subtracted by sim_inf_dur
-    # to get the new t0 which would fit the actual data better.
+    # The second part of this loop is to shift elements in t0 by random steps
+    # to try to improve the Pearson value. Because the shifting and evaluation
+    # is done per-element, another n-time loop will be done inside this loop.
 
     # Defines which step distribution to sample based on the
     # current iteration number.
@@ -196,46 +190,45 @@ deconv <- function(t, deaths, n.rep = 100, bs = FALSE, t0 = NULL) {
     # Creates an n-spaced vector containing samples of steps.
     random_steps <- sample(step_to_sample, n, replace = TRUE)
 
-    # Starts the loop to shift and evaluate sim_death_days.
-    # Each element in sim_death_days is accessed and updated in a random order
-    # to avoid bias and trends.
+    # Starts the loop to shift and evaluate elements in t0.
+    # Each element in t0 is accessed and updated in a random order
+    # to avoid biases.
     for (index in sample(1:n)) {
-      # Saves the old day of death value.
-      old_death_day <- sim_death_days[index]
+      # Saves the old day of infection value.
+      old_infected_day <- t0[index]
 
-      # Gets a new day of death value by adding a step from random_steps,
+      # Gets a new day of infection value by adding a step from random_steps,
       # with filtering to make sure it is within the (1, 310) range.
-      new_death_day <- sim_death_days[index] + random_steps[index]
-      new_death_day <- max(new_death_day, 1)
-      new_death_day <- min(new_death_day, 310)
+      new_infected_day <- old_infected_day + random_steps[index]
+      new_infected_day <- max(new_infected_day, 1)
+      new_infected_day <- min(new_infected_day, 310)
 
-      # Copies the total_sim_deaths_by_day tabulation
-      # and modify according to the new day of death value.
+      # To calculate the Pearson value, the day of death values are needed.
+      # Gets the old day of death value, together with the new day of death.
+      old_death_day <- sim_death_days[index]
+      new_death_day <- new_infected_day + sim_inf_dur[index]
+
+      # Copies the total simulated deaths by day tabulation
+      # and modifies according to the new day of death values.
       new_total_sdbd <- total_sim_deaths_by_day
       new_total_sdbd[new_death_day] <- new_total_sdbd[new_death_day] + 1
       new_total_sdbd[old_death_day] <- new_total_sdbd[old_death_day] - 1
 
-      # Evaluates the Pearson value with the new death day values.
+      # Evaluates the Pearson value with the new day of death values.
       new_pv <- pearson_eval(total_deaths_by_day, new_total_sdbd)
 
       # If the Pearson value decreases,
-      # update the new variables made within this loop.
+      # updates the new variables made within this loop.
       if (new_pv < pearson_value) {
         pearson_value <- new_pv
+        t0[index] <- new_infected_day
         sim_death_days[index] <- new_death_day
         total_sim_deaths_by_day <- new_total_sdbd
       }
     }
-
-    # The third part of this loop is to update all variables after a full
-    # update of sim_death_days, meaning we can get a full update of t0.
-    t0 <- sim_death_days - sim_inf_dur
-
-    # t0 is then filtered to stay within the (1, 310) range.
-    t0 <- pmax(t0, 1)
-    t0 <- pmin(t0, 310)
-
-    # t0 is then tabulated, to get the number of new infections by day.
+    
+    # After t0 has converged, t0 is then tabulated,
+    # to get the number of new infections by day.
     t0_freq <- tabulate(t0, nbins = 310)
 
     # This iteration's number of new infections by day is stored in inft.
