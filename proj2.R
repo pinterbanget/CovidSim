@@ -15,31 +15,35 @@
 # This R code contains functions to implement a simple
 # simulation method to infer fatal COVID-19 incidence rates
 # using data from COVID-19 deaths in English hospitals.
-# The idea is since there are sufficient information on distribution
+# The idea is since there is sufficient information on distribution
 # of time from infection to death from COVID-19, we can estimate the
-# days that patients first contacted COVID-19. The result from this
+# days that patients first contracted COVID-19. The result from this
 # simulation can be used to determine the effectiveness of control methods.
 
 # The simulation works by first getting NHS data of the number of patients
-# that died each day, and on what day they died. Then, using infection-to-death
+# that died each day and on what day they died. Then, using infection-to-death
 # time distribution, we can estimate the days that patients most likely got
 # COVID-19 by subtracting the death days by a random time from the distribution.
 # This infection day estimation is then added by a resampled time from the
 # infection-to-death distribution (making them effectively death days)
 # and comparing them with the actual data of death days to judge the
 # goodness of the estimation (done using a modified Pearson formula).
-# This process is done multiple times to get the estimation of infection days
-# that fits the most with the distribution data.
+# This process is done multiple times to get an estimation of infection days
+# that fits most with the distribution data.
 
 # When the data converges, the simulation is run again, this time to get
-# the sense of uncertainty from the estimation, by ____
+# the sense of uncertainty from the estimation. This is done by sampling
+# using a poisson distrubution where the mean is the deaths each day from
+# the NHS data. Since the data is very large a poisson distrubution will
+# be a good approximation. 
+# 
 # TODO: add Poisson stuff above this
 
 ##################################
 ##################################
 # Sets the working directories for the coders.
-setwd("/Users/rj/Documents/Codes/StatProg/covidsim") # Ryan's path
-# setwd("/Users/josephgill/covidsim") # Joseph's path
+# setwd("/Users/rj/Documents/Codes/StatProg/covidsim") # Ryan's path
+setwd("/Users/josephgill/covidsim") # Joseph's path
 # setwd("/Users/fransiskusbudi/uoe/stat_prog/covidsim") # Frans' path
 
 
@@ -52,12 +56,12 @@ pearson_eval <- function(real_deaths, sim_deaths) {
   # The sum of all the points differences is the Pearson value.
   #
   # Parameters:
-  #   real_deaths (vec)   : actual data of deaths by day
-  #   sim_deaths (vec)    : simulated data of deaths by day
+  #   real_deaths (vec) : actual data of deaths by day.
+  #   sim_deaths (vec)  : simulated data of deaths by day.
   #
   # Returns:
-  #   pearson_val (float) : the Pearson value calculated by the modified
-  #                         Pearson formula
+  #   p (float)         : the Pearson value calculated by the modified
+  #                       Pearson formula.
 
   # di and di_s are declared as vectors,
   # so vectorisation computation can be done.
@@ -78,23 +82,23 @@ deconv <- function(t, deaths, n.rep = 100, bs = FALSE, t0 = NULL) {
   # TODO: complete this comment
   #
   # Parameters:
-  #     t (vec)         : a vector of the days of the year
+  #     t (vec)         : a vector of the days of the year.
   #     deaths (vec)    : a vector of number of deaths happening on
-  #                       the days supplied by t
+  #                       the days supplied by t.
   #     n.rep (int)     : the number of iterations to be done
-  #                       (default: 100)
+  #                       (default: 100).
   #     bs (bool)       : a flag indicating bootstrapping application
-  #                       (default: FALSE)
+  #                       (default: FALSE).
   #     t0 (vec)        : a vector of estimations for the days of infections
-  #                       (default: NULL)
+  #                       (default: NULL).
   #
   # Returns:
   #     P (vec)         : an n.rep-sized vector containing the history of the
-  #                       Pearson values for each iteration
+  #                       Pearson values for each iteration.
   #     inft (mat)      : a matrix of shape (310, n.rep) containing deaths
-  #                       by t0 for each iteration
-  #     t0 (vec)        : a vector of estimations for the days of infections
-  #     total_sdbd (vec): a vector of simulated days of deaths from the model
+  #                       by t0 for each iteration.
+  #     t0 (vec)        : a vector of estimations for the days of infections.
+  #     total_sdbd (vec): a vector of simulated days of deaths from the model.
 
   # Calculates the total number of deaths occurred from the data.
   n <- sum(deaths)
@@ -103,7 +107,7 @@ deconv <- function(t, deaths, n.rep = 100, bs = FALSE, t0 = NULL) {
   # a patient, to store the day of the year said patient died.
   death_days <- rep(t, deaths)
 
-  # Creates a 310-spaced vector to store the total deaths occurred on each day.
+  # Creates a 310-spaced vector to store the total deaths that occurred on each day.
   # For this simulation, a limit is set where the deaths can only occur
   # between day 1 (inclusive) and day 310 (inclusive) of the year.
   deaths_by_day <- tabulate(death_days, nbins = 310)
@@ -151,8 +155,8 @@ deconv <- function(t, deaths, n.rep = 100, bs = FALSE, t0 = NULL) {
     # used to update t0, together with evaluating the initial Pearson score.
 
     # If bootstrapping is enabled, the number of deaths per day is sampled
-    # from a Poisson distribution ____.
-    # TODO: add this comment
+    # from a Poisson distribution with mean given by the real data.
+    # TODO: add this comment 
     # If not, the number of deaths per day used for the model is the real data.
     if (bs) {
       total_deaths_by_day <- rpois(length(deaths_by_day),
@@ -246,7 +250,6 @@ deconv <- function(t, deaths, n.rep = 100, bs = FALSE, t0 = NULL) {
          xlab = "Day number", ylab = "Num. of people", ylim = c(0, 1800),
          main = paste("COVID-19 infections and deaths\n(iter #", i, ")",
                       sep = ""))
-
     # The second line is the actual data of COVID-19 deaths.
     lines(1:310, total_deaths_by_day, col = "blue",
           type = "l", lwd = 1, lty = "solid")
@@ -323,20 +326,19 @@ actual_deaths_tabulated <- tabulate(deaths, nbins=310)
 #   ylim = c(0, 1600)
 # )
 plot(1:310,inft_t0[,100], col='black', type ="l", lwd=2,xlab = "Day number",
-     ylab = "Num. of people",ylim = c(0, 1800))
-lines(1:310,min_inft_bs, col ='gray', type ='l', lwd =1,lty ='dashed')
-lines(1:310,max_inft_bs, col ='gray', type ='l', lwd =1,lty ='dashed')
-
-lines(1:310,death_day, col ='blue', type ='l', lwd =1,lty ='solid')
-lines(1:310,sim_deaths, col ='red', type ='l', lwd =1,lty ='dotdash')
-abline(v=84, col ='red', lwd=2)
+     ylab = "Num. of people", ylim = c(0, 1800))
+lines(1:310,min_inft_bs, col ='gray', type ='l', lwd =1,lty ='dashed', ylim = c(0, 1800))
+lines(1:310,max_inft_bs, col ='gray', type ='l', lwd =1,lty ='dashed', ylim = c(0, 1800))
+lines(1:310,death_day, col ='blue', type ='l', lwd =1,lty ='solid', ylim = c(0, 1800))
+lines(1:310,sim_deaths, col ='red', type ='l', lwd =1,lty ='dotdash', ylim = c(0, 1800))
+abline(v=84, col ='red', lwd=2,ylim = c(0, 1800))
 
 legend(x = "topright", inset = 0.05,
-       legend = c("Est. new infections", "bs1","bs2" ,"Est. deaths", "Actual deaths"),
-       col = c("green","gray","gray", "red", "blue"),lty=c("solid","dashed","dashed","dotdash","solid"), cex=0.8)
+       legend = c("Est. new infections", "bs1","bs2" ,"Est. deaths", "Actual deaths","Start of Pandemic"),
+       col = c("green","gray","gray", "red", "blue","red"),lty=c("solid","dashed","dashed","dotdash","solid","solid"), cex=0.8)
 
 x <- 1:length(min_inft_bs)
-polygon(c(x, rev(x)), c(min_inft_bs, rev(max_inft_bs)), col = 'gray', density = 50, border = NA)
+polygon(c(x, rev(x)), c(min_inft_bs, rev(max_inft_bs)), col = 'gray', density = 50, border = NA, ylim = c(0, 1800))
 
 
 # polygon(c(min_inft_bs),c(min_inft_bs),col='gray')
