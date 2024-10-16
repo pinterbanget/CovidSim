@@ -85,7 +85,7 @@ pearson_eval <- function(real_deaths, sim_deaths) {
   return(p)
 }
 
-deconv <- function(t, deaths, n.rep = 10, bs = FALSE, t0 = NULL) {
+deconv <- function(t, deaths, n.rep = 100, bs = FALSE, t0 = NULL) {
   # Computes the estimated COVID-19 infection date for patients,
   # given the death date for said patients.
   #
