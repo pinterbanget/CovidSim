@@ -74,7 +74,7 @@ pearson_eval <- function(real_deaths, sim_deaths) {
   di_s <- sim_deaths
   pearson_val_vec <- (di - di_s)**2 / pmax(di_s, 1)
 
-  # Sums all elements in the vector.
+  # Sums all elements in the vector to get the Pearson value.
   pearson_val <- sum(pearson_val_vec)
 
   return(pearson_val)
@@ -90,7 +90,7 @@ deconv <- function(t, deaths, n.rep = 100, bs = FALSE, t0 = NULL) {
   # to get the most fitting estimation. Bootstrapping (bs = TRUE)
   # would replace the actual data with samples from a Poisson
   # distribution based on the real data.
-  # 
+  #
   # Parameters:
   #     t (vec)         : a vector of the days of the year.
   #     deaths (vec)    : a vector of number of deaths happening on
