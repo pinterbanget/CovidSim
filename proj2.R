@@ -4,9 +4,9 @@
 # Fransiskus Budi Kurnia Agung (s2670828@ed.ac.uk)
 
 ## Contributions:
-# Ryan (34%) - pearson_eval function, initial deconv function, commenting
-# Joseph (33%) - commenting, bootstrap, uncertainty
-# Frans (33%) - commenting, bootstrap, uncertainty, plotting
+# Ryan (34%) - pearson_eval function, initial deconv function
+# Joseph (33%) - bootstraping, uncertainty
+# Frans (33%) - bootstraping, uncertainty, plotting
 
 ##################################
 ##################################
@@ -23,28 +23,29 @@
 # The simulation works by first getting NHS data of the number of patients
 # that died each day and on what day they died. Then, using infection-to-death
 # time distribution, we can estimate the days that patients most likely got
-# COVID-19 by subtracting the death days by a random time from the distribution.
-# This fatal infection day estimation is then added by a resampled time from the
-# infection-to-death distribution (making them effectively death days)
-# and comparing them with the actual data of death days to judge the
-# goodness of the estimation (done using a modified Pearson formula).
-# This process is done multiple times to get an estimation of infection days
-# that fits most with the distribution data.
+# COVID-19 (fatal infection day) by subtracting the death days by a random
+# time from the distribution. This fatal infection day estimation is then added
+# by a resampled time from the infection-to-death distribution
+# (making them "estimated" / "simulated" death days) and comparing them with the
+# actual data of death days to judge the goodness of the estimation (which is
+# done using a modified Pearson formula). This process is done multiple times
+# to get an estimation that fits most with the actual data.
 
-# When the data converges, the simulation is run again, this time to get
-# the sense of uncertainty from the estimation. This is done by sampling
-# using a Poisson distribution: treating the real deaths data as estimates
-# of the expected values of Poisson random variables, then simulates Poisson
-# data with these expected values, to use in place of the real deaths data.
+# When the estimation converges, the simulation is run again, this time to get
+# a sense of uncertainty from the estimation. This is done by sampling using a
+# Poisson distribution: treating the real deaths data as estimates of the
+# expected values of Poisson random variables, then simulates Poisson data
+# with these expected values, to use in place of the real deaths data.
 # This process is called "bootstrapping".
 #
-# After everything is settled, a final plot is generated to see
-# the estimated incidence trajectory, estimated deaths (together with actual
-# deaths so fitness of the model can be evaluated), and the uncertainty for the
+# After everything is settled, a final plot is generated to see the estimated
+# incidence trajectory, estimated deaths (together with actual deaths, so
+# fitness of the model can be evaluated), and the uncertainty for the
 # incidence trajectory.
 
 ##################################
 ##################################
+
 # Sets the working directories for the coders.
 setwd("/Users/rj/Documents/Codes/StatProg/covidsim") # Ryan's path
 # setwd("/Users/josephgill/covidsim") # Joseph's path
@@ -73,7 +74,7 @@ pearson_eval <- function(real_deaths, sim_deaths) {
   di_s <- sim_deaths
   pearson_val_vec <- (di - di_s)**2 / pmax(di_s, 1)
 
-  # The sum of each element in the vectors is the Pearson value.
+  # Sums all elements in the vector.
   pearson_val <- sum(pearson_val_vec)
 
   return(pearson_val)
@@ -81,16 +82,22 @@ pearson_eval <- function(real_deaths, sim_deaths) {
 
 deconv <- function(t, deaths, n.rep = 100, bs = FALSE, t0 = NULL) {
   # Computes the estimated COVID-19 infection date for patients,
-  # given the death date for said patients.
-  # TODO: add details on this function?
-  #
+  # given the death date for said patients. This is done by using
+  # t and deaths (real data) as the base for the estimations,
+  # which will be estimated using a log normal distribution.
+  # Data for the distribution is taken from the ISARIC study of
+  # COVID-19 distribution. This estimation is run n.rep times
+  # to get the most fitting estimation. Bootstrapping (bs = TRUE)
+  # would replace the actual data with samples from a Poisson
+  # distribution based on the real data.
+  # 
   # Parameters:
   #     t (vec)         : a vector of the days of the year.
   #     deaths (vec)    : a vector of number of deaths happening on
   #                       the days supplied by t.
   #     n.rep (int)     : the number of iterations to be done
   #                       (default: 100).
-  #     bs (bool)       : a flag indicating bootstrapping application
+  #     bs (bool)       : a flag to indicate bootstrapping
   #                       (default: FALSE).
   #     t0 (vec)        : a vector of estimations for the days of infections
   #                       (default: NULL).
@@ -117,7 +124,7 @@ deconv <- function(t, deaths, n.rep = 100, bs = FALSE, t0 = NULL) {
 
   # Generates a probability of possible infection-to-death time for COVID-19
   # patients. The log normal distribution is used here, with mean = 3.152
-  # and sd = 0.451, in line with the ISARIC study of COVID-19 distribution.
+  # and sd = 0.451, in line with the ISARIC study.
   inf_to_d_dist <- dlnorm(1:80, meanlog = 3.152, sdlog = 0.451)
 
   # This distribution is then normalised.
@@ -141,7 +148,7 @@ deconv <- function(t, deaths, n.rep = 100, bs = FALSE, t0 = NULL) {
   P <- rep(0, n.rep)
 
   # Defines three steps to pick for changing t0 during the iterations.
-  # The idea is when the iterations are 0-50% complete, a wider range
+  # The idea is when the iterations are 0 - 50% complete, a wider range
   # of steps (step_options) can be picked. Then, when it is more than
   # 50% done, a smaller range of steps (step_options_50) can be picked.
   # The range of steps is narrowed even more (step_options_75) when the
@@ -162,8 +169,8 @@ deconv <- function(t, deaths, n.rep = 100, bs = FALSE, t0 = NULL) {
       death_pois <- rpois(length(deaths), lambda = deaths)
 
       # Generates an n-spaced vector of sampled death days for each patient.
-      # This is done to make tabulating the deaths by day to fit the (1, 310)
-      # range easier.
+      # This is done to make tabulating the deaths by day fit the
+      # (1, 310) range easier.
       death_days_pois <- rep(t, death_pois)
 
       # Tabulates the vector to get the total number of deaths by day
@@ -336,7 +343,7 @@ sim_deaths_tabulated <- initial_sim[[4]]
 # Tabulates the actual days of death data to compare with the simulated result.
 actual_deaths_tabulated <- tabulate(death_days, nbins = 310)
 
-## Generate the final plot with the amount of days since the start of the year
+## Generates the final plot with the amount of days since the start of the year
 # as the x-axis, and the number of people as the y-axis, that includes:
 # - estimated fatal incidence trajectory (black line),
 plot(1:310, inft_t0[, 100], col = "black", type = "l", lwd = 1,
