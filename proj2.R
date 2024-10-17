@@ -4,9 +4,9 @@
 # Fransiskus Budi Kurnia Agung (s2670828@ed.ac.uk)
 
 ## Contributions:
-# Ryan (xx%) - pearson_eval function, initial deconv function, commenting
-# Joseph (xx%) - 
-# Frans (xx%) - 
+# Ryan (34%) - pearson_eval function, initial deconv function, commenting
+# Joseph (33%) - commenting, bootstrap, uncertainty
+# Frans (33%) - commenting, bootstrap, uncertainty, plotting
 
 ##################################
 ##################################
@@ -156,7 +156,7 @@ deconv <- function(t, deaths, n.rep = 100, bs = FALSE, t0 = NULL) {
     # used to update t0, together with evaluating the initial Pearson score.
 
     # If bootstrapping is enabled, the number of deaths by day is changed to
-    # samples from a Poisson distribution with the mean given by the real data.
+    # sample from a Poisson distribution with the mean given by the real data.
     if (bs) {
       # Generates the total number of deaths by day using Poisson distribution.
       death_pois <- rpois(length(deaths), lambda = deaths)
