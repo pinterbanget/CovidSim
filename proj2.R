@@ -304,8 +304,11 @@ inft_bs <- bootstrapped_sim[[2]]
 
 # Gets the minimum and maximum values for t0 across different
 # iterations per day (with the bootstrapped data).
-min_inft_bs <- apply(inft_bs, 1, min)
-max_inft_bs <- apply(inft_bs, 1, max)
+# min_inft_bs <- apply(inft_bs, 1, min)
+# max_inft_bs <- apply(inft_bs, 1, max)
+
+min_inft_bs <- apply(inft_bs,1,function(x)  quantile(x,probs = c(.025,.975))["2.5%"])
+max_inft_bs <- apply(inft_bs,1,function(x)  quantile(x,probs = c(.025,.975))["97.5%"])
 
 # Accesses the simulated days of death to capture the model's fitness.
 sim_deaths_tabulated <- initial_sim[[4]]
