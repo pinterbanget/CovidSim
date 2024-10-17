@@ -6,7 +6,7 @@
 ## Contributions:
 # Ryan (34%) - pearson_eval function, initial deconv function, commenting
 # Joseph (33%) - commenting, bootstrap, uncertainty
-# Frans (xx%) - 
+# Frans (33%) - commenting, bootstrap, uncertainty, plotting
 
 ##################################
 ##################################
@@ -48,7 +48,7 @@
 # Sets the working directories for the coders.
 # setwd("/Users/rj/Documents/Codes/StatProg/covidsim") # Ryan's path
 # setwd("/Users/josephgill/covidsim") # Joseph's path
-setwd("/Users/fransiskusbudi/uoe/stat_prog/covidsim") # Frans' path
+# setwd("/Users/fransiskusbudi/uoe/stat_prog/covidsim") # Frans' path
 
 
 pearson_eval <- function(real_deaths, sim_deaths) {
