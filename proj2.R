@@ -35,9 +35,13 @@
 # the sense of uncertainty from the estimation. This is done by sampling
 # using a Poisson distrubution where the mean is the deaths each day from
 # the NHS data. Since the data is very large, a Poisson distrubution will
-# be a good approximation.
-#
+# be a good approximation. This process is called "bootstrapping".
 # TODO: still pretty unclear IMO, thoughts?
+# 
+# After everything is settled, a final plot is generated to see
+# the estimated incidence trajectory, estimated deaths (together with actual
+# deaths so fitness of the model can be evaluated), and the uncertainty for the
+# incidence trajectory.
 
 ##################################
 ##################################
@@ -98,7 +102,6 @@ deconv <- function(t, deaths, n.rep = 100, bs = FALSE, t0 = NULL) {
   #                       by t0 for each iteration.
   #     t0 (vec)        : a vector of estimations for the days of infections.
   #     total_sdbd (vec): a vector of simulated days of deaths from the model.
-  #
 
   # Calculates the total number of deaths occurred from the data.
   n <- sum(deaths)
@@ -154,15 +157,17 @@ deconv <- function(t, deaths, n.rep = 100, bs = FALSE, t0 = NULL) {
 
     # If bootstrapping is enabled, the number of deaths by day is changed to
     # samples from a Poisson distribution with the mean given by the real data.
-    # If not, the number of deaths by day used for the model is the real data.
     if (bs) {
-      # Generates the number of deaths by day using Poisson distribution.
+      # Generates the total number of deaths by day using Poisson distribution.
       death_pois <- rpois(length(deaths), lambda = deaths)
 
       # Generates an n-spaced vector of sampled death days for each patient.
+      # This is done to make tabulating the deaths by day to fit the (1, 310) 
+      # range easier.
       death_days_pois <- rep(t, death_pois)
 
-      # Tabulates the vector to get the total number of (Poisson) deaths by day.
+      # Tabulates the vector to get the total number of deaths by day
+      # within the (1, 310) range.
       total_deaths_by_day <- tabulate(death_days_pois, nbins = 310)
     }
 
@@ -288,7 +293,6 @@ deconv <- function(t, deaths, n.rep = 100, bs = FALSE, t0 = NULL) {
   return(list(P, inft, t0, total_sdbd))
 }
 
-
 # Loads the data.
 data <- read.table("engcov.txt", header = TRUE)
 
@@ -300,6 +304,9 @@ t <- data$julian
 
 # Gets deaths, the number of deaths happening by day, from the data.
 deaths <- data$nhs
+
+# Generates a vector to assign death days to each patient
+# (important for plotting later).
 death_days <- rep(t, deaths)
 
 # Calls the deconv function to run the initial simulation for estimated
@@ -318,15 +325,10 @@ inft_bs <- bootstrapped_sim[[2]]
 
 # Gets the 2.5% and 97.5% quantile values for t0 across different
 # iterations per day (with the bootstrapped data).
-# min_inft_bs <- apply(inft_bs, 1, min)
-# max_inft_bs <- apply(inft_bs, 1, max)
-
-min_inft_bs <- apply(inft_bs, 1,
+inft_bs_2.5 <- apply(inft_bs, 1,
                      function(x) quantile(x, probs = c(.025, .975))["2.5%"])
-max_inft_bs <- apply(inft_bs, 1,
+inft_bs_97.5 <- apply(inft_bs, 1,
                      function(x) quantile(x, probs = c(.025, .975))["97.5%"])
-
-# TODO: remark from ryan: can we just do this once and extract both values?
 
 # Accesses the simulated days of death to capture the model's fitness.
 sim_deaths_tabulated <- initial_sim[[4]]
@@ -339,12 +341,12 @@ actual_deaths_tabulated <- tabulate(death_days, nbins = 310)
 # - estimated fatal incidence trajectory (black line),
 plot(1:310, inft_t0[, 100], col = "black", type = "l", lwd = 1,
      xlab = "Num. of days since 1st January 2020", ylab = "Num. of people",
-     main = paste("Final COVID-19 Fatal Infections and Deaths Simulation"),
+     main = paste("COVID-19 Fatal Infections and Deaths Simulation Result"),
      ylim = c(0, 1800))
 
 # - 95% uncertainty for the incidence trajectory (shaded),
-lines(1:310, min_inft_bs, col = "gray", type = "l", lwd = 1, lty = "dashed")
-lines(1:310, max_inft_bs, col = "gray", type = "l", lwd = 1, lty = "dashed")
+lines(1:310, inft_bs_2.5, col = "gray", type = "l", lwd = 1, lty = "dashed")
+lines(1:310, inft_bs_97.5, col = "gray", type = "l", lwd = 1, lty = "dashed")
 
 # - estimated deaths (red dashed line),
 lines(1:310, sim_deaths_tabulated, col = "red",
