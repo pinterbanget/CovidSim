@@ -42,9 +42,9 @@
 ##################################
 ##################################
 # Sets the working directories for the coders.
-# setwd("/Users/rj/Documents/Codes/StatProg/covidsim") # Ryan's path
+setwd("/Users/rj/Documents/Codes/StatProg/covidsim") # Ryan's path
 # setwd("/Users/josephgill/covidsim") # Joseph's path
-setwd("/Users/fransiskusbudi/uoe/stat_prog/covidsim") # Frans' path
+# setwd("/Users/fransiskusbudi/uoe/stat_prog/covidsim") # Frans' path
 
 
 pearson_eval <- function(real_deaths, sim_deaths) {
@@ -248,17 +248,17 @@ deconv <- function(t, deaths, n.rep = 100, bs = FALSE, t0 = NULL) {
 
     # A label is produced to indicate if bootstrapping was done or not.
     if (bs) {
-      bs_label <- "(Bootstrapped)"
+      bs_label <- "[bootstrapped]"
     } else {
       bs_label <- ""
     }
 
     # The first generated ine is the estimated data of COVID-19 infection.
     plot(1:310, t0_freq, col = "black", type = "l", lwd = 1,
-         xlab = "Amount of days since 1st January 2020",
+         xlab = "Num. of days since 1st January 2020",
          ylab = "Num. of people", ylim = c(0, 1800),
-         main = paste("COVID-19 Infections and Deaths Simulation ",
-                      bs_label, "\n(iter #", i, ")", sep = ""))
+         main = paste("COVID-19 Infections and Deaths Simulation\n",
+                      bs_label, " (iter #", i, ")", sep = ""))
 
     # The second line is the actual data of COVID-19 deaths.
     lines(1:310, total_deaths_by_day, col = "blue",
@@ -338,7 +338,7 @@ actual_deaths_tabulated <- tabulate(death_days, nbins = 310)
 # as the x-axis, and the number of people as the y-axis, that includes:
 # - estimated fatal incidence trajectory (black line),
 plot(1:310, inft_t0[, 100], col = "black", type = "l", lwd = 1,
-     xlab = "Amount of days since 1st January 2020", ylab = "Num. of people",
+     xlab = "Num. of days since 1st January 2020", ylab = "Num. of people",
      main = paste("Final COVID-19 Fatal Infections and Deaths Simulation"),
      ylim = c(0, 1800))
 
