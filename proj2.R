@@ -246,11 +246,15 @@ deconv <- function(t, deaths, n.rep = 100, bs = FALSE, t0 = NULL) {
     # Generates three line charts for this iteration, with the x axis
     # being the possible days of data (in this case 1:310),
     # and the y axis being the number of people.
-    
+    if (bs){
+      title <- 'Bootstrapping'
+    } else{
+      title <- ''
+    }
     # The first line is the estimated data of COVID-19 infection.
-    plot(1:310, t0_freq, col = "black", type = "l", lwd = 2,
-         xlab = "Day number", ylab = "Num. of people", ylim = c(0, 1800),
-         main = paste("COVID-19 infections and deaths\n(iter #", i, ")",
+    plot(1:310, t0_freq, col = "black", type = "l", lwd = 1,
+         xlab = "Amount of days since 1st January 2020", ylab = "Num. of people", ylim = c(0, 1800),
+         main = paste("COVID-19 Infections and Deaths Simulation ",title,"\n(iter #", i, ")",
                       sep = ""))
     # The second line is the actual data of COVID-19 deaths.
     lines(1:310, total_deaths_by_day, col = "blue",
@@ -265,8 +269,8 @@ deconv <- function(t, deaths, n.rep = 100, bs = FALSE, t0 = NULL) {
     
     # A legend is put on the top right of the graph.
     legend(x = "topright", inset = 0.05,
-           legend = c("Est. new infections", "Est. deaths", "Actual deaths"),
-           col = c("green", "red", "blue"), lty = 1:2, cex = 0.8)
+           legend = c("Estimated Insidence Trajectory","Estimated Deaths", "Actual Deaths","Start of the UK Lockdown at Day-84"),
+           col = c("black", "red", "blue","red"), lty=c("solid","dotdash","solid","solid"), lwd=c(1,1,1,2), cex = 0.8)
   }
   
   # Saves the simulation of death days from the final iteration.
@@ -319,21 +323,14 @@ sim_deaths_tabulated <- initial_sim[[4]]
 # Tabulated the actual days of death data to compare with the simulated result.
 actual_deaths_tabulated <- tabulate(death_days, nbins=310)
 
-# matplot(
-#   1:310,
-#   cbind(inft_t0[,100], min_inft_bs, max_inft_bs, sim_deaths, death_day),
-#   main = paste("COVID-19 infections and deaths", sep=""),
-#   xlab = "Day number",
-#   ylab = "Num. of people",
-#   type = c("l","l","l","l","l"),
-#   lty = c("solid","dashed","dashed","solid","dashed"),
-#   lwd = c(2,1,1,1,1),
-#   col = c("green","gray","gray", "red", "blue"),
-#   ylim = c(0, 1600)
-# )
-plot(1:310,inft_t0[,100], col='black', type ="l", lwd=2,xlab = "Day number",
-     ylab = "Num. of people", ylim = c(0, 1800))
-# lines(1:310,inft_bs[,100], col ='green', type ='l', lwd =1,lty ='solid')
+# Generate the final plot that includes:
+# Black line: Estimated Insidence Trajectory
+# Red-dashed line: Estimated Deaths
+# Blue line: Actual Deaths
+# Vertical Red Line: Start of UK Lockdown at the day-84
+# Shaded Grey Area: 95% Uncertainty
+plot(1:310,inft_t0[,100], col='black', type ="l", lwd=1,xlab = "Amount of days since 1st January 2020",
+     ylab = "Num. of people", ylim = c(0, 1800),main = paste("COVID-19 Infections and Deaths Simulation "))
 lines(1:310,min_inft_bs, col ='gray', type ='l', lwd =1,lty ='dashed')
 lines(1:310,max_inft_bs, col ='gray', type ='l', lwd =1,lty ='dashed')
 lines(1:310,actual_deaths_tabulated, col ='blue', type ='l', lwd =1,lty ='solid')
@@ -341,14 +338,8 @@ lines(1:310,sim_deaths_tabulated, col ='red', type ='l', lwd =1,lty ='dotdash')
 abline(v=84, col ='red', lwd=2)
 
 legend(x = "topright", inset = 0.05,
-       legend = c("Est. new infections","Est. deaths", "Actual deaths","Start of Lockdown", "Gray Shade 95% Uncertainty"),
-       col = c("black", "red", "blue","red",'gray'),lty=c("solid","dotdash","solid","solid","dotted"), cex=0.8)
+       legend = c("Estimated Insidence Trajectory","Estimated Deaths", "Actual Deaths","Start of the UK Lockdown at Day-84", "Gray Shade 95% Uncertainty"),
+       col = c("black", "red", "blue","red",'gray'),lty=c("solid","dotdash","solid","solid","dotted"), lwd=c(1,1,1,2,1), cex=0.8)
 
 x <- 1:length(min_inft_bs)
 polygon(c(x, rev(x)), c(min_inft_bs, rev(max_inft_bs)), col = 'gray', density = 50, border = NA)
-
-
-# polygon(c(min_inft_bs),c(min_inft_bs),col='gray')
-
-# TODO: create final graphs
-# TODO: check bootstrap implementation, is it correct already?
