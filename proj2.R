@@ -33,10 +33,10 @@
 
 # When the data converges, the simulation is run again, this time to get
 # the sense of uncertainty from the estimation. This is done by sampling
-# using a Poisson distrubution where the mean is the deaths each day from
-# the NHS data. Since the data is very large, a Poisson distrubution will
-# be a good approximation. This process is called "bootstrapping".
-# TODO: still pretty unclear IMO, thoughts?
+# using a Poisson distrubution treats the real deaths data as estimates of the expected values of Poisson random variables,
+# then simulates Poisson data with these expected values, to use in place of the real deaths data.
+# This process is called "bootstrapping".
+#
 # 
 # After everything is settled, a final plot is generated to see
 # the estimated incidence trajectory, estimated deaths (together with actual
@@ -46,9 +46,9 @@
 ##################################
 ##################################
 # Sets the working directories for the coders.
-setwd("/Users/rj/Documents/Codes/StatProg/covidsim") # Ryan's path
+# setwd("/Users/rj/Documents/Codes/StatProg/covidsim") # Ryan's path
 # setwd("/Users/josephgill/covidsim") # Joseph's path
-# setwd("/Users/fransiskusbudi/uoe/stat_prog/covidsim") # Frans' path
+setwd("/Users/fransiskusbudi/uoe/stat_prog/covidsim") # Frans' path
 
 
 pearson_eval <- function(real_deaths, sim_deaths) {
@@ -81,8 +81,7 @@ pearson_eval <- function(real_deaths, sim_deaths) {
 
 deconv <- function(t, deaths, n.rep = 100, bs = FALSE, t0 = NULL) {
   # Computes the estimated COVID-19 infection date for patients,
-  # given the death date for said patients. This is done by ____
-  # TODO: complete this comment. especially about bootstrapping
+  # given the death date for said patients.
   #
   # Parameters:
   #     t (vec)         : a vector of the days of the year.
@@ -344,7 +343,7 @@ plot(1:310, inft_t0[, 100], col = "black", type = "l", lwd = 1,
      main = paste("COVID-19 Fatal Infections and Deaths Simulation Result"),
      ylim = c(0, 1800))
 
-# - 95% uncertainty for the incidence trajectory (shaded),
+# - 95% uncertainty for the incidence trajectory line,
 lines(1:310, inft_bs_2.5, col = "gray", type = "l", lwd = 1, lty = "dashed")
 lines(1:310, inft_bs_97.5, col = "gray", type = "l", lwd = 1, lty = "dashed")
 
@@ -367,6 +366,6 @@ legend(x = "topright", inset = 0.05,
        lty = c("solid", "dotdash", "solid", "solid", "dotted"),
        lwd = c(1, 1, 1, 2, 1), cex = 0.8)
 
-# TODO: what does this thing below do? @Joseph @Frans
-x <- 1:length(min_inft_bs)
-polygon(c(x, rev(x)), c(min_inft_bs, rev(max_inft_bs)), col = 'gray', density = 50, border = NA)
+# Generates shaded area to represents 95% Uncertainty
+x <- 1:length(inft_bs_2.5)
+polygon(c(x, rev(x)), c(inft_bs_2.5, rev(inft_bs_97.5)), col = 'gray', density = 50, border = NA)
