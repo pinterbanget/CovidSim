@@ -5,8 +5,8 @@
 
 ## Contributions:
 # Ryan (34%) - pearson_eval function, initial deconv function
-# Joseph (33%) - bootstraping, uncertainty
-# Frans (33%) - bootstraping, uncertainty, plotting
+# Joseph (33%) - bootstrapping, uncertainty
+# Frans (33%) - bootstrapping, uncertainty, plotting
 
 ##################################
 ##################################
@@ -47,7 +47,7 @@
 ##################################
 
 # Sets the working directories for the coders.
-setwd("/Users/rj/Documents/Codes/StatProg/covidsim") # Ryan's path
+# setwd("/Users/rj/Documents/Codes/StatProg/covidsim") # Ryan's path
 # setwd("/Users/josephgill/covidsim") # Joseph's path
 # setwd("/Users/fransiskusbudi/uoe/stat_prog/covidsim") # Frans' path
 
@@ -243,9 +243,9 @@ deconv <- function(t, deaths, n.rep = 100, bs = FALSE, t0 = NULL) {
         total_sim_deaths_by_day <- new_total_sdbd
       }
     }
-    
+
     ## The third part of this loop is to update variables and create plots.
-    
+
     # After t0 has converged, t0 is then tabulated,
     # to get the number of new fatal infections by day.
     t0_freq <- tabulate(t0, nbins = 310)
