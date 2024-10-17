@@ -33,11 +33,11 @@
 
 # When the data converges, the simulation is run again, this time to get
 # the sense of uncertainty from the estimation. This is done by sampling
-# using a Poisson distrubution treats the real deaths data as estimates of the expected values of Poisson random variables,
-# then simulates Poisson data with these expected values, to use in place of the real deaths data.
+# using a Poisson distribution: treating the real deaths data as estimates
+# of the expected values of Poisson random variables, then simulates Poisson
+# data with these expected values, to use in place of the real deaths data.
 # This process is called "bootstrapping".
 #
-# 
 # After everything is settled, a final plot is generated to see
 # the estimated incidence trajectory, estimated deaths (together with actual
 # deaths so fitness of the model can be evaluated), and the uncertainty for the
@@ -82,6 +82,7 @@ pearson_eval <- function(real_deaths, sim_deaths) {
 deconv <- function(t, deaths, n.rep = 100, bs = FALSE, t0 = NULL) {
   # Computes the estimated COVID-19 infection date for patients,
   # given the death date for said patients.
+  # TODO: add details on this function?
   #
   # Parameters:
   #     t (vec)         : a vector of the days of the year.
@@ -149,7 +150,7 @@ deconv <- function(t, deaths, n.rep = 100, bs = FALSE, t0 = NULL) {
   step_options_50 <- c(-4, -2, -1, 1, 2, 4)
   step_options_75 <- c(-2, -1, 1, 2)
 
-  # Loops over n.rep times.
+  # Starts the n.rep-time loop.
   for (i in 1:n.rep) {
     # The first part of this loop is to generate the variables that will be
     # used to update t0, together with evaluating the initial Pearson score.
@@ -161,7 +162,7 @@ deconv <- function(t, deaths, n.rep = 100, bs = FALSE, t0 = NULL) {
       death_pois <- rpois(length(deaths), lambda = deaths)
 
       # Generates an n-spaced vector of sampled death days for each patient.
-      # This is done to make tabulating the deaths by day to fit the (1, 310) 
+      # This is done to make tabulating the deaths by day to fit the (1, 310)
       # range easier.
       death_days_pois <- rep(t, death_pois)
 
@@ -246,9 +247,9 @@ deconv <- function(t, deaths, n.rep = 100, bs = FALSE, t0 = NULL) {
     # Puts the final Pearson score for the i-th iteration to P.
     P[i] <- pearson_value
 
-    # Generates three line charts for this iteration, with the x axis
-    # being the possible days of data (in this case 1:310),
-    # and the y axis being the number of people.
+    # Generates three line charts for this iteration, with the
+    # x-axis being the amount of days since the start of the year, and the
+    # y-axis being the number of people.
 
     # A label is produced to indicate if bootstrapping was done or not.
     if (bs) {
@@ -257,14 +258,14 @@ deconv <- function(t, deaths, n.rep = 100, bs = FALSE, t0 = NULL) {
       bs_label <- ""
     }
 
-    # The first generated ine is the estimated data of COVID-19 infection.
+    # The first generated line chart is the estimated COVID-19 infection data.
     plot(1:310, t0_freq, col = "black", type = "l", lwd = 1,
          xlab = "Num. of days since 1st January 2020",
          ylab = "Num. of people", ylim = c(0, 1800),
          main = paste("COVID-19 Infections and Deaths Simulation\n",
                       bs_label, " (iter #", i, ")", sep = ""))
 
-    # The second line is the actual data of COVID-19 deaths.
+    # The second chart is the actual data of COVID-19 deaths.
     lines(1:310, total_deaths_by_day, col = "blue",
           type = "l", lwd = 1, lty = "solid")
 
@@ -327,7 +328,7 @@ inft_bs <- bootstrapped_sim[[2]]
 inft_bs_2.5 <- apply(inft_bs, 1,
                      function(x) quantile(x, probs = c(.025, .975))["2.5%"])
 inft_bs_97.5 <- apply(inft_bs, 1,
-                     function(x) quantile(x, probs = c(.025, .975))["97.5%"])
+                      function(x) quantile(x, probs = c(.025, .975))["97.5%"])
 
 # Accesses the simulated days of death to capture the model's fitness.
 sim_deaths_tabulated <- initial_sim[[4]]
@@ -343,9 +344,13 @@ plot(1:310, inft_t0[, 100], col = "black", type = "l", lwd = 1,
      main = paste("COVID-19 Fatal Infections and Deaths Simulation Result"),
      ylim = c(0, 1800))
 
-# - 95% uncertainty for the incidence trajectory line,
+# - 95% uncertainty limit for the incidence trajectory line,
 lines(1:310, inft_bs_2.5, col = "gray", type = "l", lwd = 1, lty = "dashed")
 lines(1:310, inft_bs_97.5, col = "gray", type = "l", lwd = 1, lty = "dashed")
+
+# - shaded area to represent the uncertainty range,
+polygon(c(1:310, rev(1:310)), c(inft_bs_2.5, rev(inft_bs_97.5)),
+        col = "gray", density = 50, border = NA)
 
 # - estimated deaths (red dashed line),
 lines(1:310, sim_deaths_tabulated, col = "red",
@@ -365,7 +370,3 @@ legend(x = "topright", inset = 0.05,
        col = c("black", "red", "blue", "red", "gray"),
        lty = c("solid", "dotdash", "solid", "solid", "dotted"),
        lwd = c(1, 1, 1, 2, 1), cex = 0.8)
-
-# Generates shaded area to represents 95% Uncertainty
-x <- 1:length(inft_bs_2.5)
-polygon(c(x, rev(x)), c(inft_bs_2.5, rev(inft_bs_97.5)), col = 'gray', density = 50, border = NA)
