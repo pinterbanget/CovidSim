@@ -25,8 +25,8 @@
 # time distribution, we can estimate the days that patients most likely got
 # COVID-19 (fatal infection day) by subtracting the death days by a random
 # time from the distribution. This fatal infection day estimation is then added
-# by a resampled time from the infection-to-death distribution
-# (making them "estimated" / "simulated" death days) and comparing them with the
+# by a resampled time from the infection-to-death distribution (effectively
+# making them "estimated" / "simulated" death days) and comparing them with the
 # actual data of death days to judge the goodness of the estimation (which is
 # done using a modified Pearson formula). This process is done multiple times
 # to get an estimation that fits most with the actual data.
@@ -143,7 +143,7 @@ deconv <- function(t, deaths, n.rep = 100, bs = FALSE, t0 = NULL) {
   # for every iteration from 1 to n.rep.
   inft <- matrix(data = NA, nrow = 310, ncol = n.rep)
 
-  # Creates an n.rep-spaced vector to store the Pearson score
+  # Creates an n.rep-spaced vector to store the Pearson value
   # after each iteration.
   P <- rep(0, n.rep)
 
@@ -159,11 +159,11 @@ deconv <- function(t, deaths, n.rep = 100, bs = FALSE, t0 = NULL) {
 
   # Starts the n.rep-time loop.
   for (i in 1:n.rep) {
-    # The first part of this loop is to generate the variables that will be
-    # used to update t0, together with evaluating the initial Pearson score.
+    ## The first part of this loop is to generate the variables that will be
+    # used to update t0, together with evaluating the initial Pearson value.
 
     # If bootstrapping is enabled, the number of deaths by day is changed to
-    # sample from a Poisson distribution with the mean given by the real data.
+    # sample from a Poisson distribution with the real data as the means.
     if (bs) {
       # Generates the total number of deaths by day using Poisson distribution.
       death_pois <- rpois(length(deaths), lambda = deaths)
@@ -190,7 +190,7 @@ deconv <- function(t, deaths, n.rep = 100, bs = FALSE, t0 = NULL) {
     # Computes the initial Pearson value for this iteration.
     pearson_value <- pearson_eval(total_deaths_by_day, total_sim_deaths_by_day)
 
-    # The second part of this loop is to shift elements in t0 by random steps
+    ## The second part of this loop is to shift elements in t0 by random steps
     # to try to improve the Pearson value. Because the shifting and evaluation
     # is done per-element, another n-time loop will be done inside this loop.
 
@@ -243,7 +243,9 @@ deconv <- function(t, deaths, n.rep = 100, bs = FALSE, t0 = NULL) {
         total_sim_deaths_by_day <- new_total_sdbd
       }
     }
-
+    
+    ## The third part of this loop is to update variables and create plots.
+    
     # After t0 has converged, t0 is then tabulated,
     # to get the number of new fatal infections by day.
     t0_freq <- tabulate(t0, nbins = 310)
@@ -251,7 +253,7 @@ deconv <- function(t, deaths, n.rep = 100, bs = FALSE, t0 = NULL) {
     # This iteration's number of new infections by day is stored in inft.
     inft[, i] <- t0_freq
 
-    # Puts the final Pearson score for the i-th iteration to P.
+    # Puts the final Pearson value for the i-th iteration to P.
     P[i] <- pearson_value
 
     # Generates three line charts for this iteration, with the
@@ -367,7 +369,7 @@ lines(1:310, sim_deaths_tabulated, col = "red",
 lines(1:310, actual_deaths_tabulated, col = "blue",
       type = "l", lwd = 1, lty = "solid")
 
-# - a line indicating the first day of UK lockdown (red line).
+# - a line indicating the first day of lockdown (red line).
 abline(v = 84, col = "red", lwd = 2)
 
 # Generates the legend for the final plot.
